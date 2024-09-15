@@ -13,9 +13,10 @@
 
 echo "We are running on $(hostname)"
 echo "Job started at $(date)"
-echo "Arguments to srun: $@"
+#echo "Arguments to srun: $@"
 
 # Runs your script with the arguments you passed in
-srun $@
+#srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.perf tests/standard/10k_density_0.7.in 20
+srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim tests/small/random10.in 20
 
 echo "Job ended at $(date)"
