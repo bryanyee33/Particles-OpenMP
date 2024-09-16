@@ -1,0 +1,168 @@
+We are running on soctf-pdc-012.d1.comp.nus.edu.sg
+Job started at Mon Sep 16 08:09:01 PM +08 2024
+Arbitrary:
+SMALL
+<INPUT_PATH>: tests/small/random10.in
+<NUM_THREADS>: 20
+Number of particles: 1000
+Square size: 186
+Radius: 1
+Number of steps: 100
+
+ Performance counter stats for './sim.arbitrary.perf tests/small/random10.in 20':
+
+            109.45 msec task-clock                #    2.742 CPUs utilized          
+
+       0.039908949 seconds time elapsed
+
+       0.066543000 seconds user
+       0.046580000 seconds sys
+
+
+MEDIUM
+<INPUT_PATH>: tests/standard/10k_density_0.7.in
+<NUM_THREADS>: 20
+Number of particles: 10000
+Square size: 10000
+Radius: 47
+Number of steps: 100
+
+ Performance counter stats for './sim.arbitrary.perf tests/standard/10k_density_0.7.in 20':
+
+          1,833.75 msec task-clock                #    5.060 CPUs utilized          
+
+       0.362428696 seconds time elapsed
+
+       1.787472000 seconds user
+       0.051070000 seconds sys
+
+
+LARGE
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+
+ Performance counter stats for './sim.arbitrary.perf tests/large/100k_density_0.9.in 20':
+
+         28,790.98 msec task-clock                #    4.494 CPUs utilized          
+
+       6.406887006 seconds time elapsed
+
+      28.742747000 seconds user
+       0.056240000 seconds sys
+
+
+Arbitrary Repeat:
+SMALL
+<INPUT_PATH>: tests/small/random10.in
+<NUM_THREADS>: 20
+Number of particles: 1000
+Square size: 186
+Radius: 1
+Number of steps: 100
+
+ Performance counter stats for './sim.arbitrary_repeat.perf tests/small/random10.in 20':
+
+            185.42 msec task-clock                #    0.673 CPUs utilized          
+
+       0.275509706 seconds time elapsed
+
+       0.124421000 seconds user
+       0.068646000 seconds sys
+
+
+MEDIUM
+<INPUT_PATH>: tests/standard/10k_density_0.7.in
+<NUM_THREADS>: 20
+Number of particles: 10000
+Square size: 10000
+Radius: 47
+Number of steps: 100
+
+ Performance counter stats for './sim.arbitrary_repeat.perf tests/standard/10k_density_0.7.in 20':
+
+          1,778.01 msec task-clock                #    5.163 CPUs utilized          
+
+       0.344380534 seconds time elapsed
+
+       1.727983000 seconds user
+       0.054312000 seconds sys
+
+
+LARGE
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+
+ Performance counter stats for './sim.arbitrary_repeat.perf tests/large/100k_density_0.9.in 20':
+
+         28,637.28 msec task-clock                #    4.855 CPUs utilized          
+
+       5.898043743 seconds time elapsed
+
+      28.519963000 seconds user
+       0.123722000 seconds sys
+
+
+Cluster:
+SMALL
+<INPUT_PATH>: tests/small/random10.in
+<NUM_THREADS>: 20
+Number of particles: 1000
+Square size: 186
+Radius: 1
+Number of steps: 100
+
+ Performance counter stats for './sim.cluster.perf tests/small/random10.in 20':
+
+             75.51 msec task-clock                #    1.503 CPUs utilized          
+
+       0.050231500 seconds time elapsed
+
+       0.059809000 seconds user
+       0.018887000 seconds sys
+
+
+MEDIUM
+<INPUT_PATH>: tests/standard/10k_density_0.7.in
+<NUM_THREADS>: 20
+Number of particles: 10000
+Square size: 10000
+Radius: 47
+Number of steps: 100
+
+ Performance counter stats for './sim.cluster.perf tests/standard/10k_density_0.7.in 20':
+
+          2,258.14 msec task-clock                #    2.716 CPUs utilized          
+
+       0.831465511 seconds time elapsed
+
+       2.242562000 seconds user
+       0.021116000 seconds sys
+
+
+LARGE
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+
+ Performance counter stats for './sim.cluster.perf tests/large/100k_density_0.9.in 20':
+
+        462,849.96 msec task-clock                #    1.051 CPUs utilized          
+
+     440.258077789 seconds time elapsed
+
+     462.793246000 seconds user
+       0.064001000 seconds sys
+
+
+Job ended at Mon Sep 16 08:16:37 PM +08 2024
