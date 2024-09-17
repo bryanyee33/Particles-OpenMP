@@ -164,16 +164,16 @@ int main(int argc, char* argv[]) {
         // }
 
         // ARBITRARY REPEAT [Fastest for Medium & Large]
-        // bool unresolved = true;
-        // while (unresolved) {
-        //     unresolved = false;
-        //     for (int i = 0; i < params.param_particles; i++) {
-        //         if (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius)) {
-        //             while (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius));
-        //             unresolved = true;
-        //         }
-        //     }
-        // }
+        bool unresolved = true;
+        while (unresolved) {
+            unresolved = false;
+            for (int i = 0; i < params.param_particles; i++) {
+                if (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius)) {
+                    while (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius));
+                    unresolved = true;
+                }
+            }
+        }
 
         // ARBITRARY REPEAT PARALLEL [WRONG CONCEPT - DOESN'T WORK (resolving particle x & y independently would not result in same values)]
         // bool unresolved = true;
