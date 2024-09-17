@@ -113,9 +113,9 @@ inline bool is_particle_moving_closer(std::vector<Particle> &particles, int idx1
  * - vel2: The velocity of the second particle
  * - radius: The radius of the particles
  */
-// inline bool is_particle_collision(std::vector<Particle> &particles, int idx1, int idx2, int radius) {
-//     return is_particle_overlap(particles[idx1].loc, particles[idx2].loc, radius) && is_particle_moving_closer(particles, idx1, idx2);
-// }
+inline bool is_particle_collision(std::vector<Particle> &particles, int idx1, int idx2, int radius) {
+    return is_particle_overlap(particles[idx1].loc, particles[idx2].loc, radius) && is_particle_moving_closer(particles, idx1, idx2);
+}
 
 /**
  * Implements the rules to change the velocity of two particles that collide
