@@ -16,35 +16,40 @@ echo "Job started at $(date)"
 #echo "Arguments to srun: $@"
 
 # Runs your script with the arguments you passed in
-#srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.perf tests/large/100k_density_0.9.in 20
-#srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.perf tests/standard/10k_density_0.7.in 20
-#srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim tests/small/random10.in 20
-
-#srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.perf tests/large/100k_density_0.9.in 20
-
-echo "SMALL"
-echo "Arbitrary:"
-srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.arbitrary.perf tests/small/random10.in 20
-echo "Arbitrary Repeat:"
-srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.arbitrary_repeat.perf tests/small/random10.in 20
-echo "Cluster:"
-srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.cluster.perf tests/small/random10.in 20
-
-echo "MEDIUM"
-echo "Arbitrary:"
-srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.arbitrary.perf tests/standard/10k_density_0.7.in 20
-echo "Arbitrary Repeat:"
-srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.arbitrary_repeat.perf tests/standard/10k_density_0.7.in 20
-echo "Cluster:"
-srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.cluster.perf tests/standard/10k_density_0.7.in 20
-
-echo "LARGE:"
-echo "Arbitrary:"
-srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.arbitrary.perf tests/large/100k_density_0.9.in 20
-echo "Arbitrary Repeat:"
+srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.perf tests/large/100k_density_0.9.in 20
 srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.arbitrary_repeat.perf tests/large/100k_density_0.9.in 20
-echo "Cluster:"
-srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.cluster.perf tests/large/100k_density_0.9.in 20
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.perf tests/standard/10k_density_0.7.in 20
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.arbitrary_repeat.perf tests/standard/10k_density_0.7.in 20
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.perf tests/small/random10.in 20
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.arbitrary_repeat.perf tests/small/random10.in 20
+
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim tests/small/random10.in 20
+
+#srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.perf tests/large/100k_density_0.9.in 20
+
+# echo "SMALL"
+# echo "Arbitrary:"
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.arbitrary.perf tests/small/random10.in 20
+# echo "Arbitrary Repeat:"
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.arbitrary_repeat.perf tests/small/random10.in 20
+# echo "Cluster:"
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.cluster.perf tests/small/random10.in 20
+
+# echo "MEDIUM"
+# echo "Arbitrary:"
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.arbitrary.perf tests/standard/10k_density_0.7.in 20
+# echo "Arbitrary Repeat:"
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.arbitrary_repeat.perf tests/standard/10k_density_0.7.in 20
+# echo "Cluster:"
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.cluster.perf tests/standard/10k_density_0.7.in 20
+
+# echo "LARGE:"
+# echo "Arbitrary:"
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.arbitrary.perf tests/large/100k_density_0.9.in 20
+# echo "Arbitrary Repeat:"
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.arbitrary_repeat.perf tests/large/100k_density_0.9.in 20
+# echo "Cluster:"
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.cluster.perf tests/large/100k_density_0.9.in 20
 
 
 echo "Job ended at $(date)"

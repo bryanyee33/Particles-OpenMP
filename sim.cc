@@ -10,13 +10,10 @@
 #include "io.h"
 #include "sim_validator.h"
 
-void print_particle(Particle &p) {
-    printf("Particle %d: Loc: %f,%f, Vel: %f,%f\n", p.i, p.loc.x, p.loc.y, p.vel.x, p.vel.y);
-}
 
 inline void update_grid(int grid_width, int grid_count,
         std::vector<std::vector<std::vector<int>>> &grid, std::vector<Particle> &particles) {
-    //TODO
+
     #pragma omp parallel for shared(grid, grid_count) collapse(2) if(grid_count >= 100000)
     for (int i = 0; i < grid_count; i++) {
         for (int j = 0; j < grid_count; j++) {
@@ -26,39 +23,55 @@ inline void update_grid(int grid_width, int grid_count,
 
     // Parallelising is slower since particles.size() is too small,
     // and since updating grid needs critical section
-    for (int i = 0; i < (int) particles.size(); i++) {
+    for (std::vector<Particle>::size_type i = 0; i < particles.size(); i++) {
         int row = std::max(0, int(particles[i].loc.y / grid_width));
         row = std::min(row, grid_count - 1);
         int col = std::max(0, int(particles[i].loc.x / grid_width));
         col = std::min(col, grid_count - 1);
 
-        grid[row][col].push_back(i);
+        grid[row][col].emplace_back(i);
     }
 }
 
-inline void add_overlaps(std::vector<int> &vec_to_check, std::vector<Particle> &particles, int particle_idx, std::vector<std::vector<int>> &overlaps, int radius) {
+inline void add_overlaps(std::vector<int> &vec_to_check, std::vector<Particle> &particles, int idx, std::vector<std::vector<int>> &overlaps, int radius) {
     for (int i : vec_to_check) {
-        if (i != particle_idx && is_particle_overlap(particles[particle_idx].loc, particles[i].loc, radius)) {
-            #pragma omp critical
-            overlaps[particle_idx].push_back(i);
+        if (i != idx && is_particle_overlap(particles[idx].loc, particles[i].loc, radius)) {
+            overlaps[idx].emplace_back(i);
         }
     }
 }
 
-inline bool check_and_resolve_particles(std::vector<int> &vec_to_check, std::vector<Particle> &particles, int particle_idx, int square_size, int radius) {
+inline bool check_and_resolve_particles(std::vector<int> &neighbours, std::vector<Particle> &particles, int idx, int square_size, int radius) {
     bool unresolved = false;
 
-    for (int i : vec_to_check) {
-        if (i == -1 && is_wall_collision(particles, particle_idx, square_size, radius)) {
-            resolve_wall_collision(particles, particle_idx, square_size, radius);
+    for (int i : neighbours) {
+        if (i == -1 && is_wall_collision(particles, idx, square_size, radius)) {
+            resolve_wall_collision(particles, idx, square_size, radius);
             unresolved = true;
-        } else if (i != -1 && is_particle_moving_closer(particles, particle_idx, i)) {
-            resolve_particle_collision(particles, particle_idx, i);
+        } else if (i != -1 && is_particle_moving_closer(particles, idx, i)) {
+            resolve_particle_collision(particles, idx, i);
             unresolved = true;
         }
     }
     return unresolved;
 }
+
+// inline bool check_and_resolve_particles(Particle &p, std::vector<Particle> &neighbours, bool wall_overlap, int square_size, int radius) {
+//     bool unresolved = false;
+
+//     if (wall_overlap && is_wall_collision(p, square_size, radius)) {
+//         resolve_wall_collision(p, square_size, radius);
+//         unresolved = true;
+//     }
+
+//     for (Particle &n : neighbours) {
+//         if (is_particle_moving_closer(p, n)) {
+//             resolve_particle_collision(p, n);
+//             unresolved = true;
+//         }
+//     }
+//     return unresolved;
+// }
 
 int main(int argc, char* argv[]) {
     // Read arguments and input file
@@ -103,7 +116,7 @@ int main(int argc, char* argv[]) {
         // Find overlaps
         std::vector<std::vector<int>> overlaps(params.param_particles);
 
-        #pragma omp parallel for shared(grid, overlaps, particles) collapse(2)
+        #pragma omp parallel for shared(grid, overlaps, particles) schedule(static) collapse(2)
         for (int row = 0; row < grid_count; row++) {
             for (int col = 0; col < grid_count; col++) {
                 for (int i : grid[row][col]) {
@@ -132,8 +145,8 @@ int main(int argc, char* argv[]) {
                     // If last (or 2nd last) row / col; or Out of bounds for at least 1 axis
                     if ((row >= possible_wall_collision_max || col >= possible_wall_collision_max || !y_check_idx_valid || !x_check_idx_valid) &&
                             is_wall_overlap(particles[i].loc, params.square_size, params.param_radius)) {
-                        #pragma omp critical
-                        overlaps[i].push_back(-1);
+                        //#pragma omp critical - Not needed as each thread writing to unique overlaps[i]
+                        overlaps[i].emplace_back(-1);
                     }
                 }
             }
@@ -151,43 +164,61 @@ int main(int argc, char* argv[]) {
         // }
 
         // ARBITRARY REPEAT [Fastest for Medium & Large]
-        bool unresolved = true;
-        while (unresolved) {
-            unresolved = false;
-            for (int i = 0; i < params.param_particles; i++) {
-                if (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius)) {
-                    while (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius));
-                    unresolved = true;
-                }
-            }
-        }
+        // bool unresolved = true;
+        // while (unresolved) {
+        //     unresolved = false;
+        //     for (int i = 0; i < params.param_particles; i++) {
+        //         if (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius)) {
+        //             while (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius));
+        //             unresolved = true;
+        //         }
+        //     }
+        // }
+
+        // ARBITRARY REPEAT PARALLEL [WRONG CONCEPT - DOESN'T WORK (resolving particle x & y independently would not result in same values)]
+        // bool unresolved = true;
+        // while (unresolved) {
+        //     unresolved = false;
+        //     std::vector<Particle> particles_read = particles;
+        //     #pragma omp parallel for shared(overlaps, particles, particles_read) reduction(|| : unresolved)
+        //     for (int i = 0; i < params.param_particles; i++) {
+        //         bool wall_overlap = false;
+        //         std::vector<Particle> neighbours; // Store neighbouring particles for edit
+        //         for (int j : overlaps[i]) {
+        //             if (j != -1) {
+        //                 neighbours.emplace_back(particles_read[j]); // unedited particles
+        //             } else {
+        //                 wall_overlap = true;
+        //             }
+        //         }
+        //         if (check_and_resolve_particles(particles[i], neighbours, wall_overlap, params.square_size, params.param_radius)) {
+        //             while (check_and_resolve_particles(particles[i], neighbours, wall_overlap, params.square_size, params.param_radius));
+        //             unresolved = true;
+        //         }
+        //     }
+        // }
 
         // RESOLVE BY CLUSTER [Slowest, but took the longest time to make :( - too much overhead]
         // std::unordered_set<int> visited; // contains elements of all resolved clusters
         // std::unordered_set<int> cluster_visited; // contains elements only within current cluster
         // std::stack<int> stack; // DFS stack
-
         // for (int i = 0; i < params.param_particles; i++) {
         //     if (visited.find(i) == visited.end()) {
         //         // cluster not yet visited
         //         stack.push(i);
-
         //         // inside cluster
         //         while (!stack.empty()) {
         //             int curr = stack.top();
         //             stack.pop();
-
         //             if (cluster_visited.find(curr) == cluster_visited.end()) {
         //                 // cluster element not yet visited
         //                 if (check_and_resolve_particles(overlaps[curr], particles, curr, params.square_size, params.param_radius)) {
         //                     // have unresolved; redo DFS starting from this element
         //                     cluster_visited = std::unordered_set<int>();
-        //                     stack = std::stack<int>();
-                            
+        //                     stack = std::stack<int>();      
         //                     // keep resolving until no more
         //                     while (check_and_resolve_particles(overlaps[curr], particles, curr, params.square_size, params.param_radius));
         //                 }
-
         //                 // DFS
         //                 cluster_visited.insert(curr);
         //                 for (int neighbour : overlaps[curr]) {
@@ -197,9 +228,49 @@ int main(int argc, char* argv[]) {
         //                 }
         //             }
         //         }
-
         //         visited.merge(cluster_visited); // combine with overall visited set
         //         cluster_visited = std::unordered_set<int>();
+        //     }
+        // }
+
+        // RESOLVE BY CLUSTER PARALLEL [STILL SLOW - too much overhead at small, clusters too huge at large]
+        // std::vector<std::vector<int>> clusters;
+        // std::unordered_set<int> visited;
+        // std::stack<int> stack; // DFS stack
+        // // Store clusters
+        // for (int i = 0; i < params.param_particles; i++) {
+        //     if (visited.find(i) == visited.end()) {
+        //         // cluster not yet visited
+        //         stack.emplace(i);
+        //         clusters.emplace_back();
+        //         // inside cluster
+        //         while (!stack.empty()) {
+        //             int curr = stack.top();
+        //             stack.pop();
+        //             if (visited.find(curr) == visited.end()) {
+        //                 visited.insert(curr);
+        //                 clusters.back().emplace_back(curr);
+        //                 for (int neighbour : overlaps[curr]) {
+        //                     if (neighbour != -1) {
+        //                         stack.emplace(neighbour);
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+        // // Resolve clusters in parallel
+        // bool unresolved = true;
+        // while (unresolved) {
+        //     unresolved = false;
+        //     #pragma omp parallel for shared(overlaps, particles) schedule(guided) reduction(|| : unresolved)
+        //     for (std::vector<int> cluster : clusters) {
+        //         for (int i : cluster) {
+        //             if (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius)) {
+        //                 while (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius));
+        //                 unresolved = true;
+        //             }
+        //         }
         //     }
         // }
 
