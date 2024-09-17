@@ -15,15 +15,15 @@ inline void update_grid(int grid_width, int grid_count,
         std::vector<std::vector<std::vector<int>>> &grid, std::vector<Particle> &particles) {
 
     #pragma omp parallel for shared(grid, grid_count) collapse(2) if(grid_count >= 100000)
-    for (int i = 0; i < grid_count; i++) {
-        for (int j = 0; j < grid_count; j++) {
+    for (int i = 0; i < grid_count; ++i) {
+        for (int j = 0; j < grid_count; ++j) {
             grid[i][j].clear();
         }
     }
 
     // Parallelising is slower since particles.size() is too small,
     // and since updating grid needs critical section
-    for (std::vector<Particle>::size_type i = 0; i < particles.size(); i++) {
+    for (std::vector<Particle>::size_type i = 0; i < particles.size(); ++i) {
         int row = std::max(0, int(particles[i].loc.y / grid_width));
         row = std::min(row, grid_count - 1);
         int col = std::max(0, int(particles[i].loc.x / grid_width));
@@ -35,7 +35,7 @@ inline void update_grid(int grid_width, int grid_count,
 
 inline void add_overlaps(std::vector<int> &vec_to_check, std::vector<Particle> &particles, int idx, std::vector<std::vector<int>> &overlaps, int radius) {
     for (int i : vec_to_check) {
-        if (i != idx && is_particle_overlap(particles[idx].loc, particles[i].loc, radius)) {
+        if (idx < i && is_particle_overlap(particles[idx].loc, particles[i].loc, radius)) {
             overlaps[idx].emplace_back(i);
         }
     }
@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
     std::vector<std::vector<std::vector<int>>> grid(grid_count,
             std::vector<std::vector<int>>(grid_count));
 
-    for (int n = 0; n < params.param_steps; n++) {
+    for (int n = 0; n < params.param_steps; ++n) {
         // Position update
         for (Particle &p : particles) {
             p.loc.y += p.vel.y;
@@ -117,8 +117,8 @@ int main(int argc, char* argv[]) {
         std::vector<std::vector<int>> overlaps(params.param_particles);
 
         #pragma omp parallel for shared(grid, overlaps, particles) schedule(static) collapse(2)
-        for (int row = 0; row < grid_count; row++) {
-            for (int col = 0; col < grid_count; col++) {
+        for (int row = 0; row < grid_count; ++row) {
+            for (int col = 0; col < grid_count; ++col) {
                 for (int i : grid[row][col]) {
                     // Find which quadrant of grid box the particle is in, and store the resulting indexes to check
                     // No need critical section since location is fixed
@@ -158,7 +158,7 @@ int main(int argc, char* argv[]) {
         // bool unresolved = true;
         // while (unresolved) {
         //     unresolved = false;
-        //     for (int i = 0; i < params.param_particles; i++) {
+        //     for (int i = 0; i < params.param_particles; ++i) {
         //         unresolved = check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius) || unresolved;
         //     }
         // }
@@ -167,7 +167,7 @@ int main(int argc, char* argv[]) {
         bool unresolved = true;
         while (unresolved) {
             unresolved = false;
-            for (int i = 0; i < params.param_particles; i++) {
+            for (int i = 0; i < params.param_particles; ++i) {
                 if (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius)) {
                     while (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius));
                     unresolved = true;
@@ -181,7 +181,7 @@ int main(int argc, char* argv[]) {
         //     unresolved = false;
         //     std::vector<Particle> particles_read = particles;
         //     #pragma omp parallel for shared(overlaps, particles, particles_read) reduction(|| : unresolved)
-        //     for (int i = 0; i < params.param_particles; i++) {
+        //     for (int i = 0; i < params.param_particles; ++i) {
         //         bool wall_overlap = false;
         //         std::vector<Particle> neighbours; // Store neighbouring particles for edit
         //         for (int j : overlaps[i]) {
@@ -202,7 +202,7 @@ int main(int argc, char* argv[]) {
         // std::unordered_set<int> visited; // contains elements of all resolved clusters
         // std::unordered_set<int> cluster_visited; // contains elements only within current cluster
         // std::stack<int> stack; // DFS stack
-        // for (int i = 0; i < params.param_particles; i++) {
+        // for (int i = 0; i < params.param_particles; ++i) {
         //     if (visited.find(i) == visited.end()) {
         //         // cluster not yet visited
         //         stack.push(i);
@@ -238,7 +238,7 @@ int main(int argc, char* argv[]) {
         // std::unordered_set<int> visited;
         // std::stack<int> stack; // DFS stack
         // // Store clusters
-        // for (int i = 0; i < params.param_particles; i++) {
+        // for (int i = 0; i < params.param_particles; ++i) {
         //     if (visited.find(i) == visited.end()) {
         //         // cluster not yet visited
         //         stack.emplace(i);
