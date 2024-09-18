@@ -16,8 +16,8 @@ echo "Job started at $(date)"
 #echo "Arguments to srun: $@"
 
 # Runs your script with the arguments you passed in
-srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.perf tests/large/100k_density_0.9.in 20
-srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./e0957806.perf tests/large/100k_density_0.9.in 20
+srun --partition=i7-13700 --time=00:10:00 perf stat -e task-clock ./sim.perf tests/large/100k_density_0.9.in 8
+srun --partition=i7-13700 --time=00:10:00 perf stat -e task-clock ./e0957806.perf tests/large/100k_density_0.9.in 8
 # srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.perf tests/standard/10k_density_0.7.in 20
 # srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./e0957806.perf tests/standard/10k_density_0.7.in 20
 # srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim.perf tests/small/random10.in 20

@@ -3,8 +3,8 @@
 #include <cmath>
 #include <fstream>
 #include <vector>
-#include <unordered_set>
-#include <stack>
+// #include <unordered_set>
+// #include <stack>
 
 #include "collision.h"
 #include "io.h"
@@ -37,40 +37,63 @@ inline void add_overlaps(std::vector<int> &vec_to_check, std::vector<Particle> &
     for (int i : vec_to_check) {
         Vec2 loc1 = particles[idx].loc;
         Vec2 loc2 = particles[i].loc;
-        if (idx < i && is_particle_overlap(loc2.x - loc1.x, loc2.y - loc1.y, radius)) {
+        if (idx != i && is_particle_overlap(loc2.x - loc1.x, loc2.y - loc1.y, radius)) {
             overlaps[idx].emplace_back(i);
         }
     }
 }
 
-inline bool check_and_resolve_particles(std::vector<int> &neighbours, std::vector<Particle> &particles, int idx, int square_size, int radius) {
+inline bool check_and_resolve_particles_store_less_reverse(std::vector<int> &neighbours, std::vector<Particle> &particles, int idx, std::vector<int> &to_resolve,
+        int square_size, int radius) {
+    bool unresolved = false;
+
+    for (auto i = neighbours.rbegin(); i != neighbours.rend(); ++i) {
+        if (*i == -1) {
+            if (is_wall_collision(particles[idx], square_size, radius)) {
+                resolve_wall_collision(particles[idx], square_size, radius);
+                unresolved = true;
+            }
+        } else if (is_particle_moving_closer(particles[idx], particles[*i])) {
+            resolve_particle_collision(particles[idx], particles[*i]);
+            unresolved = true;
+            if (*i < idx) {
+                to_resolve.emplace_back(*i);
+            }
+        }
+    }
+    return unresolved;
+}
+
+inline bool check_and_resolve_particles_store(std::vector<int> &neighbours, std::vector<Particle> &particles, int idx, std::vector<int> &to_resolve,
+        int square_size, int radius) {
     bool unresolved = false;
 
     for (int i : neighbours) {
         if (i == -1) {
             if (is_wall_collision(particles[idx], square_size, radius)) {
                 resolve_wall_collision(particles[idx], square_size, radius);
-                return true; // last element in neighbours
+                unresolved = true;
             }
         } else if (is_particle_moving_closer(particles[idx], particles[i])) {
             resolve_particle_collision(particles[idx], particles[i]);
             unresolved = true;
+            to_resolve.emplace_back(i);
         }
     }
     return unresolved;
 }
 
-// inline bool check_and_resolve_particles(Particle &p, std::vector<Particle> &neighbours, bool wall_overlap, int square_size, int radius) {
+// inline bool check_and_resolve_particles(std::vector<int> &neighbours, std::vector<Particle> &particles, int idx, int square_size, int radius) {
 //     bool unresolved = false;
 
-//     if (wall_overlap && is_wall_collision(p, square_size, radius)) {
-//         resolve_wall_collision(p, square_size, radius);
-//         unresolved = true;
-//     }
-
-//     for (Particle &n : neighbours) {
-//         if (is_particle_moving_closer(p, n)) {
-//             resolve_particle_collision(p, n);
+//     for (int i : neighbours) {
+//         if (i == -1) {
+//             if (is_wall_collision(particles[idx], square_size, radius)) {
+//                 resolve_wall_collision(particles[idx], square_size, radius);
+//                 return true; // last element in neighbours
+//             }
+//         } else if (is_particle_moving_closer(particles[idx], particles[i])) {
+//             resolve_particle_collision(particles[idx], particles[i]);
 //             unresolved = true;
 //         }
 //     }
@@ -168,16 +191,30 @@ int main(int argc, char* argv[]) {
         // }
 
         // ARBITRARY REPEAT [Fastest for Medium & Large]
-        bool unresolved = true;
-        while (unresolved) {
-            unresolved = false;
-            for (int i = 0; i < params.param_particles; ++i) {
-                if (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius)) {
-                    while (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius));
-                    unresolved = true;
-                }
-            }
+        // bool unresolved = true;
+        // while (unresolved) {
+        //     unresolved = false;
+        //     for (int i = 0; i < params.param_particles; ++i) {
+        //         if (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius)) {
+        //             while (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius));
+        //             unresolved = true;
+        //         }
+        //     }
+        // }
+
+        // TRACK CHANGED [Better for i7-13700 : higher freq per core]
+        std::vector<int> to_resolve;
+        for (int i = 0; i < params.param_particles; ++i) {
+            while (check_and_resolve_particles_store_less_reverse(overlaps[i], particles, i, to_resolve, params.square_size, params.param_radius));
         }
+        while (!to_resolve.empty()) {
+            std::vector<int> to_resolve2;
+            for (int i : to_resolve) {
+                while (check_and_resolve_particles_store(overlaps[i], particles, i, to_resolve2, params.square_size, params.param_radius));
+            }
+            to_resolve.swap(to_resolve2);
+        }
+        
 
         // ARBITRARY REPEAT PARALLEL [WRONG CONCEPT - DOESN'T WORK (resolving particle x & y independently would not result in same values)]
         // bool unresolved = true;
