@@ -202,7 +202,7 @@ int main(int argc, char* argv[]) {
         //     }
         // }
 
-        // TRACK CHANGED [Better for i7-13700 : higher freq per core]
+        // TRACK ONLY CHANGED
         std::vector<int> to_resolve;
         for (int i = 0; i < params.param_particles; ++i) {
             while (check_and_resolve_particles_store_less_reverse(overlaps[i], particles, i, to_resolve, params.square_size, params.param_radius));
