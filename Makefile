@@ -1,4 +1,4 @@
-CXX := g++
+CXX := clang++
 CXXFLAGS := -Wall -Wextra -Werror -pedantic -std=c++20 -fopenmp
 RELEASEFLAGS := -O3
 
