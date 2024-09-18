@@ -1,6 +1,6 @@
 CXX := g++
 CXXFLAGS := -Wall -Wextra -Werror -pedantic -std=c++20 -fopenmp
-RELEASEFLAGS := -Ofast
+RELEASEFLAGS := -O3
 
 # List of source files
 SRCS := main.cc io.cc
@@ -35,4 +35,10 @@ $(PERF_EXECUTABLES): %.perf: %.o.perf io.o
 	$(CXX) $(CXXFLAGS) -DCHECK=0 $(RELEASEFLAGS) -o $@ $^
 
 clean:
-	$(RM) *.o *.o.perf $(EXECUTABLES) $(PERF_EXECUTABLES)
+	$(RM) *.o *.o.perf $(EXECUTABLES) $(PERF_EXECUTABLES) bonus bonus.perf
+
+
+# sim == bonus, sim.perf == bonus.perf
+bonus: all
+	cp sim bonus
+	cp sim.perf bonus.perf

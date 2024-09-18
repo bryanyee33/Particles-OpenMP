@@ -35,7 +35,9 @@ inline void update_grid(int grid_width, int grid_count,
 
 inline void add_overlaps(std::vector<int> &vec_to_check, std::vector<Particle> &particles, int idx, std::vector<std::vector<int>> &overlaps, int radius) {
     for (int i : vec_to_check) {
-        if (idx < i && is_particle_overlap(particles[idx].loc, particles[i].loc, radius)) {
+        Vec2 loc1 = particles[idx].loc;
+        Vec2 loc2 = particles[i].loc;
+        if (idx < i && is_particle_overlap(loc2.x - loc1.x, loc2.y - loc1.y, radius)) {
             overlaps[idx].emplace_back(i);
         }
     }
@@ -45,11 +47,13 @@ inline bool check_and_resolve_particles(std::vector<int> &neighbours, std::vecto
     bool unresolved = false;
 
     for (int i : neighbours) {
-        if (i == -1 && is_wall_collision(particles, idx, square_size, radius)) {
-            resolve_wall_collision(particles, idx, square_size, radius);
-            unresolved = true;
-        } else if (i != -1 && is_particle_moving_closer(particles, idx, i)) {
-            resolve_particle_collision(particles, idx, i);
+        if (i == -1) {
+            if (is_wall_collision(particles[idx], square_size, radius)) {
+                resolve_wall_collision(particles[idx], square_size, radius);
+                return true; // last element in neighbours
+            }
+        } else if (is_particle_moving_closer(particles[idx], particles[i])) {
+            resolve_particle_collision(particles[idx], particles[i]);
             unresolved = true;
         }
     }
@@ -144,7 +148,7 @@ int main(int argc, char* argv[]) {
                     }
                     // If last (or 2nd last) row / col; or Out of bounds for at least 1 axis
                     if ((row >= possible_wall_collision_max || col >= possible_wall_collision_max || !y_check_idx_valid || !x_check_idx_valid) &&
-                            is_wall_overlap(particles[i].loc, params.square_size, params.param_radius)) {
+                            is_wall_overlap(particles[i].loc.x, particles[i].loc.y, params.square_size, params.param_radius)) {
                         //#pragma omp critical - Not needed as each thread writing to unique overlaps[i]
                         overlaps[i].emplace_back(-1);
                     }

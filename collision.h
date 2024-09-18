@@ -5,27 +5,26 @@
  */
 
 #include <cassert>
-#include <cmath>
 #include <cstdlib>
 
 #include "io.h"
 
 // Is particle overlapping with a wall
-inline bool is_wall_overlap(Vec2 loc, int square_size, int radius);
+inline bool is_wall_overlap(double x, double y, int square_size, int radius);
 // Is particle colliding with a wall
-inline bool is_wall_collision(std::vector<Particle> &particles, int idx, int square_size, int radius);
+inline bool is_wall_collision(Particle &p, int square_size, int radius);
 // Make particle not collide with wall
 // PRECONDITION: Can be called with no preconditions
-inline void resolve_wall_collision(std::vector<Particle> &particles, int idx, int square_size, int radius);
+inline void resolve_wall_collision(Particle &p, int square_size, int radius);
 // Are the particles overlapping
-inline bool is_particle_overlap(Vec2 loc1, Vec2 loc2, int radius);
+inline bool is_particle_overlap(double dx, double dy, int radius);
 // Are the particles moving closer together
-inline bool is_particle_moving_closer(std::vector<Particle> &particles, int idx1, int idx2);
+inline bool is_particle_moving_closer(Particle &p1, Particle &p2);
 // Are the particles colliding
-inline bool is_particle_collision(std::vector<Particle> &particles, int idx1, int idx2);
+inline bool is_particle_collision(Particle &p1, Particle &p2, int radius);
 // Make particles not collide with each other
 // PRECONDITION: Must only be called if particles are overlapping
-inline void resolve_particle_collision(std::vector<Particle> &particles, int idx1, int idx2);
+inline void resolve_particle_collision(Particle &p1, Particle &p2);
 // Get the total energy of a group of particles
 inline double getEnergy(std::vector<Particle>& particles);
 // Get the total momentum of a group of particles
@@ -41,9 +40,9 @@ inline Vec2 getMomentum(std::vector<Particle>& particles);
  * - square_size: The length of the simulation area
  * - radius: The radius of the particle
  */
-inline bool is_wall_overlap(Vec2 loc, int square_size, int radius) {
-    return loc.x - radius <= 0 || loc.x + radius >= square_size ||
-            loc.y - radius <= 0 || loc.y + radius >= square_size;
+inline bool is_wall_overlap(double x, double y, int square_size, int radius) {
+    return x - radius <= 0 || x + radius >= square_size ||
+            y - radius <= 0 || y + radius >= square_size;
 }
 
 /**
@@ -52,8 +51,7 @@ inline bool is_wall_overlap(Vec2 loc, int square_size, int radius) {
  * - square_size: The length of the simulation area
  * - radius: The radius of the particle
  */
-inline bool is_wall_collision(std::vector<Particle> &particles, int idx, int square_size, int radius) {
-    Particle &p = particles[idx];
+inline bool is_wall_collision(Particle &p, int square_size, int radius) {
     return (p.loc.x - radius <= 0 && p.vel.x < 0) || (p.loc.x + radius >= square_size && p.vel.x > 0) ||
             (p.loc.y - radius <= 0 && p.vel.y < 0) || (p.loc.y + radius >= square_size && p.vel.y > 0);
 }
@@ -65,8 +63,7 @@ inline bool is_wall_collision(std::vector<Particle> &particles, int idx, int squ
  * - square_size: The length of the simulation area
  * - radius: The radius of the particle
  */
-inline void resolve_wall_collision(std::vector<Particle> &particles, int idx, int square_size, int radius) {
-    Particle &p = particles[idx];
+inline void resolve_wall_collision(Particle &p, int square_size, int radius) {
     if (p.loc.x - radius <= 0) {
         p.vel.x = std::abs(p.vel.x);
     } else if (p.loc.x + radius >= square_size) {
@@ -85,9 +82,7 @@ inline void resolve_wall_collision(std::vector<Particle> &particles, int idx, in
  * - loc2: The location of the second particle
  * - radius: The radius of the particles
  */
-inline bool is_particle_overlap(Vec2 loc1, Vec2 loc2, int radius) {
-    double dx = loc2.x - loc1.x;
-    double dy = loc2.y - loc1.y;
+inline bool is_particle_overlap(double dx, double dy, int radius) {
     return (dx * dx + dy * dy) <= (radius << 1) * (radius << 1);
 }
 
@@ -98,9 +93,7 @@ inline bool is_particle_overlap(Vec2 loc1, Vec2 loc2, int radius) {
  * - loc2: The location of the second particle
  * - vel2: The velocity of the second particle
  */
-inline bool is_particle_moving_closer(std::vector<Particle> &particles, int idx1, int idx2) {
-    Particle &p1 = particles[idx1];
-    Particle &p2 = particles[idx2];
+inline bool is_particle_moving_closer(Particle &p1, Particle &p2) {
     return (p2.vel.x - p1.vel.x) * (p2.loc.x - p1.loc.x) +
             (p2.vel.y - p1.vel.y) * (p2.loc.y - p1.loc.y) < -0.0000001;
 }
@@ -113,8 +106,10 @@ inline bool is_particle_moving_closer(std::vector<Particle> &particles, int idx1
  * - vel2: The velocity of the second particle
  * - radius: The radius of the particles
  */
-inline bool is_particle_collision(std::vector<Particle> &particles, int idx1, int idx2, int radius) {
-    return is_particle_overlap(particles[idx1].loc, particles[idx2].loc, radius) && is_particle_moving_closer(particles, idx1, idx2);
+inline bool is_particle_collision(Particle &p1, Particle &p2, int radius) {
+    Vec2 loc1 = p1.loc;
+    Vec2 loc2 = p2.loc;
+    return is_particle_overlap(loc2.x - loc1.x, loc2.y - loc1.y, radius) && is_particle_moving_closer(p1, p2);
 }
 
 /**
@@ -124,14 +119,13 @@ inline bool is_particle_collision(std::vector<Particle> &particles, int idx1, in
  * - loc2: The location of the second particle
  * - vel2: The velocity of the second particle
  */
-inline void resolve_particle_collision(std::vector<Particle> &particles, int idx1, int idx2) {
-    Particle &p1 = particles[idx1];
-    Particle &p2 = particles[idx2];
+inline void resolve_particle_collision(Particle &p1, Particle &p2) {
     double dx = p2.loc.x - p1.loc.x;
     double dy = p2.loc.y - p1.loc.y;
 
     // Calculate the new velocities of the particles after the collision
-    double collision_scale = std::min(0.0, (p2.vel.x - p1.vel.x) * dx + (p2.vel.y - p1.vel.y) * dy) /
+    // No need do min(0, ...) since checked if particles are moving closer
+    double collision_scale = ((p2.vel.x - p1.vel.x) * dx + (p2.vel.y - p1.vel.y) * dy) /
             (dx * dx + dy * dy);
 
     p1.vel.x += collision_scale * dx;
