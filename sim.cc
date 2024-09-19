@@ -11,23 +11,21 @@
 #include "sim_validator.h"
 
 
-inline void update_grid(int grid_width, int grid_count,
-        std::vector<std::vector<std::vector<int>>> &grid, std::vector<Particle> &particles) {
+inline void update_grid(int grid_box_width, int grid_box_row_count, int grid_box_count,
+        std::vector<std::vector<int>> &grid, std::vector<Particle> &particles) {
 
-    //#pragma omp parallel for shared(grid, grid_count) collapse(2) if(particles.size() >= 100000)
-    for (int i = 0; i < grid_count; ++i) {
-        for (int j = 0; j < grid_count; ++j) {
-            grid[i][j].clear();
-        }
+    //#pragma omp parallel for shared(grid, grid_box_row_count) if(particles.size() >= 100000)
+    for (int i = 0; i < grid_box_count; ++i) {
+        grid[i].clear();
     }
 
     // Parallelising is slower since particles.size() is too small,
     // and since updating grid needs critical section
     for (std::vector<Particle>::size_type i = 0; i < particles.size(); ++i) {
-        int row = std::min(std::max(0, int(particles[i].loc.y / grid_width)), grid_count - 1);
-        int col = std::min(std::max(0, int(particles[i].loc.x / grid_width)), grid_count - 1);
+        int row = std::min(std::max(0, int(particles[i].loc.y / grid_box_width)), grid_box_row_count - 1);
+        int col = std::min(std::max(0, int(particles[i].loc.x / grid_box_width)), grid_box_row_count - 1);
 
-        grid[row][col].emplace_back(i);
+        grid[row * grid_box_row_count + col].emplace_back(i);
     }
 }
 
@@ -102,14 +100,15 @@ int main(int argc, char* argv[]) {
     std::vector<Particle> particles;
     read_args(argc, argv, params, particles);
 
-    int grid_width = (params.param_radius << 2) + 1;
-    int grid_count = std::ceil(params.square_size / grid_width);
+    int grid_box_width = (params.param_radius << 2) + 1; // Width of each small box in grid
+    int grid_box_row_count = std::ceil(params.square_size / grid_box_width); // No. of small boxes in a row
+    int grid_box_count = grid_box_row_count * grid_box_row_count; // No. of small boxes in grid
     int possible_wall_collision_max;
     // If length of last box is smaller than radius, particles in the 2nd last box can still hit the wall.
-    if (params.square_size % grid_width != 0 && params.square_size % grid_width < params.param_radius) {
-        possible_wall_collision_max = grid_count - 2;
+    if (params.square_size % grid_box_width != 0 && params.square_size % grid_box_width < params.param_radius) {
+        possible_wall_collision_max = grid_box_row_count - 2;
     } else {
-        possible_wall_collision_max = grid_count - 1;
+        possible_wall_collision_max = grid_box_row_count - 1;
     }
 
     // Set number of threads
@@ -125,17 +124,16 @@ int main(int argc, char* argv[]) {
 #endif
 
     // TODO: this is the part where you simulate particle behavior.
-    int reserve_size = params.param_particles / (grid_count * grid_count); // assume roughly equal amount per grid square
+    int reserve_size = params.param_particles / grid_box_count; // assume roughly equal amount per grid square
 
-    std::vector<std::vector<std::vector<int>>> grid(grid_count,
-            std::vector<std::vector<int>>(grid_count));
+    std::vector<std::vector<int>> grid(grid_box_count);
     
-    #pragma omp parallel for shared(grid) schedule(static) collapse(2) //if (grid_count >= 37)
-    for (int row = 0; row < grid_count; ++row) {
-        for (int col = 0; col < grid_count; ++col) {
-            grid[row][col].reserve(reserve_size);
-        }
+    #pragma omp parallel for shared(grid) schedule(static) //if (grid_box_row_count >= 37)
+    for (int i = 0; i < grid_box_count; ++i) {
+        grid[i].reserve(reserve_size);
     }
+
+    //std::vector<int> grid_quadrants(grid_box_count << 2);
 
     std::vector<std::vector<int>> overlaps(params.param_particles);
 
@@ -152,48 +150,48 @@ int main(int argc, char* argv[]) {
             p.loc.y += p.vel.y;
             p.loc.x += p.vel.x;
         }
-        update_grid(grid_width, grid_count, grid, particles);
+        update_grid(grid_box_width, grid_box_row_count, grid_box_count, grid, particles);
 
         // Find overlaps
-        #pragma omp parallel for shared(overlaps) schedule(static) //if (grid_count >= 37)
+        #pragma omp parallel for shared(overlaps) schedule(static) //if (grid_box_row_count >= 37)
         for (int i = 0; i < params.param_particles; ++i) {
             overlaps[i].clear();
         }
 
-        #pragma omp parallel for shared(grid, overlaps, particles) schedule(static) collapse(2)
-        for (int row = 0; row < grid_count; ++row) {
-            for (int col = 0; col < grid_count; ++col) {
-                for (int i : grid[row][col]) {
-                    // Find which quadrant of grid box the particle is in, and store the resulting indexes to check
-                    // No need critical section since location is fixed
-                    int y_check_idx = row + ((std::fmod(particles[i].loc.y, grid_width) >= grid_width / 2.0) << 1) - 1; // -1 for down, +1 for up, added to row
-                    int x_check_idx = col + ((std::fmod(particles[i].loc.x, grid_width) >= grid_width / 2.0) << 1) - 1; // -1 for left, +1 for right, added to col
-                    bool y_check_idx_valid = 0 <= y_check_idx && y_check_idx < grid_count;
-                    bool x_check_idx_valid = 0 <= x_check_idx && x_check_idx < grid_count;
+        #pragma omp parallel for shared(grid, overlaps, particles) schedule(static)
+        for (int box = 0; box < grid_box_count; ++box) {
+            for (int i : grid[box]) {
+                // Find which quadrant of grid box the particle is in, and store the resulting indexes to check
+                // No need critical section since location is fixed
+                int row = box / grid_box_row_count;
+                int col = box - row * grid_box_row_count;
+                int y_check_idx = row + ((std::fmod(particles[i].loc.y, grid_box_width) >= grid_box_width / 2.0) << 1) - 1; // -1 for down, +1 for up, added to row
+                int x_check_idx = col + ((std::fmod(particles[i].loc.x, grid_box_width) >= grid_box_width / 2.0) << 1) - 1; // -1 for left, +1 for right, added to col
+                bool y_check_idx_valid = 0 <= y_check_idx && y_check_idx < grid_box_row_count;
+                bool x_check_idx_valid = 0 <= x_check_idx && x_check_idx < grid_box_row_count;
 
-                    // Find overlaps
-                    // Same grid box
-                    add_overlaps(grid[row][col], particles, i, overlaps, params.param_radius);
-                    
-                    if (x_check_idx_valid) {
-                        add_overlaps(grid[row][x_check_idx], particles, i, overlaps, params.param_radius);
-                    }
-                    if (y_check_idx_valid) {
-                        add_overlaps(grid[y_check_idx][col], particles, i, overlaps, params.param_radius);
-                    }
-                    
-                    // Diagonally opposite grid box
-                    if (y_check_idx_valid && x_check_idx_valid) {
-                        add_overlaps(grid[y_check_idx][x_check_idx], particles, i, overlaps, params.param_radius);
-                    }
-                    // If last (or 2nd last) row / col; or Out of bounds for at least 1 axis
-                    if ((row >= possible_wall_collision_max || col >= possible_wall_collision_max || !y_check_idx_valid || !x_check_idx_valid) &&
-                            is_wall_overlap(particles[i].loc.x, particles[i].loc.y, params.square_size, params.param_radius)) {
-                        //#pragma omp critical - Not needed as each thread writing to unique wall_overlaps[i]
-                        wall_overlaps[i] = 1;
-                    } else {
-                        wall_overlaps[i] = 0;
-                    }
+                // Find overlaps
+                // Same grid box
+                add_overlaps(grid[box], particles, i, overlaps, params.param_radius);
+                
+                if (x_check_idx_valid) {
+                    add_overlaps(grid[row * grid_box_row_count + x_check_idx], particles, i, overlaps, params.param_radius);
+                }
+                if (y_check_idx_valid) {
+                    add_overlaps(grid[y_check_idx * grid_box_row_count + col], particles, i, overlaps, params.param_radius);
+                }
+                
+                // Diagonally opposite grid box
+                if (y_check_idx_valid && x_check_idx_valid) {
+                    add_overlaps(grid[y_check_idx * grid_box_row_count + x_check_idx], particles, i, overlaps, params.param_radius);
+                }
+                // If last (or 2nd last) row / col; or Out of bounds for at least 1 axis
+                if ((row >= possible_wall_collision_max || col >= possible_wall_collision_max || !y_check_idx_valid || !x_check_idx_valid) &&
+                        is_wall_overlap(particles[i].loc.x, particles[i].loc.y, params.square_size, params.param_radius)) {
+                    //#pragma omp critical - Not needed as each thread writing to unique wall_overlaps[i]
+                    wall_overlaps[i] = 1;
+                } else {
+                    wall_overlaps[i] = 0;
                 }
             }
         }
