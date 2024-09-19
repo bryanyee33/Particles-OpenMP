@@ -160,11 +160,6 @@ int main(int argc, char* argv[]) {
             overlaps[i].clear();
         }
 
-        #pragma omp parallel for shared(wall_overlaps) schedule(static)
-        for (int i = 0; i < params.param_particles; ++i) {
-            wall_overlaps[i] = 0;
-        }
-
         #pragma omp parallel for shared(grid, overlaps, particles) schedule(static) collapse(2)
         for (int row = 0; row < grid_count; ++row) {
             for (int col = 0; col < grid_count; ++col) {
@@ -196,6 +191,8 @@ int main(int argc, char* argv[]) {
                             is_wall_overlap(particles[i].loc.x, particles[i].loc.y, params.square_size, params.param_radius)) {
                         //#pragma omp critical - Not needed as each thread writing to unique wall_overlaps[i]
                         wall_overlaps[i] = 1;
+                    } else {
+                        wall_overlaps[i] = 0;
                     }
                 }
             }
