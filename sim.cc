@@ -24,7 +24,7 @@ inline void update_grid(int grid_box_width, int grid_box_row_count, int grid_box
     for (std::vector<Particle>::size_type i = 0; i < particles.size(); ++i) {
         int row = std::min(std::max(0, int(particles[i].loc.y / grid_box_width)), grid_box_row_count - 1);
         int col = std::min(std::max(0, int(particles[i].loc.x / grid_box_width)), grid_box_row_count - 1);
-
+    
         grid[row * grid_box_row_count + col].emplace_back(i);
     }
 }
@@ -126,6 +126,7 @@ int main(int argc, char* argv[]) {
     // TODO: this is the part where you simulate particle behavior.
     int reserve_size = params.param_particles / grid_box_count; // assume roughly equal amount per grid square
 
+    // 2D Array stored as 1D: Stored row by row, from bottom left to top right
     std::vector<std::vector<int>> grid(grid_box_count);
     
     #pragma omp parallel for shared(grid) schedule(static) //if (grid_box_row_count >= 37)
@@ -133,7 +134,14 @@ int main(int argc, char* argv[]) {
         grid[i].reserve(reserve_size);
     }
 
-    //std::vector<int> grid_quadrants(grid_box_count << 2);
+    // 3D Array stored as 1D: for each small box in grid,
+    // store bottom left, bottom right, top left, top right of this box (in this order)
+    std::vector<std::vector<int>> grid_quadrants(grid_box_count << 2);
+
+    #pragma omp parallel for shared(grid_quadrants) schedule(static)
+    for (int i = 0; i < grid_box_count << 2; ++i) {
+        grid_quadrants[i].reserve(reserve_size >> 2);
+    }
 
     std::vector<std::vector<int>> overlaps(params.param_particles);
 
@@ -144,6 +152,7 @@ int main(int argc, char* argv[]) {
 
     std::vector<int> wall_overlaps(params.param_particles, 0);
 
+
     for (int n = 0; n < params.param_steps; ++n) {
         // Position update
         for (Particle &p : particles) {
@@ -152,46 +161,74 @@ int main(int argc, char* argv[]) {
         }
         update_grid(grid_box_width, grid_box_row_count, grid_box_count, grid, particles);
 
+        #pragma omp parallel for shared(grid, grid_box_row_count)
+        for (int i = 0; i < grid_box_count << 2; ++i) {
+            grid_quadrants[i].clear();
+        }
+
         // Find overlaps
         #pragma omp parallel for shared(overlaps) schedule(static) //if (grid_box_row_count >= 37)
         for (int i = 0; i < params.param_particles; ++i) {
             overlaps[i].clear();
         }
 
-        #pragma omp parallel for shared(grid, overlaps, particles) schedule(static)
-        for (int box = 0; box < grid_box_count; ++box) {
-            for (int i : grid[box]) {
-                // Find which quadrant of grid box the particle is in, and store the resulting indexes to check
-                // No need critical section since location is fixed
-                int row = box / grid_box_row_count;
-                int col = box - row * grid_box_row_count;
-                int y_check_idx = row + ((std::fmod(particles[i].loc.y, grid_box_width) >= grid_box_width / 2.0) << 1) - 1; // -1 for down, +1 for up, added to row
-                int x_check_idx = col + ((std::fmod(particles[i].loc.x, grid_box_width) >= grid_box_width / 2.0) << 1) - 1; // -1 for left, +1 for right, added to col
-                bool y_check_idx_valid = 0 <= y_check_idx && y_check_idx < grid_box_row_count;
-                bool x_check_idx_valid = 0 <= x_check_idx && x_check_idx < grid_box_row_count;
+        double half_box_size = grid_box_width / 2.0;
 
-                // Find overlaps
-                // Same grid box
-                add_overlaps(grid[box], particles, i, overlaps, params.param_radius);
+        #pragma omp parallel for shared(grid, grid_quadrants, particles) schedule(static)
+        for (int box = 0; box < grid_box_count; ++box) {
+            // Find which quadrant of grid box each particle is in            
+            for (int i : grid[box]) {
+                // 0 for left, 1 for right
+                int x_dir = std::fmod(particles[i].loc.x, grid_box_width) >= half_box_size;
+                // 0 for bottom, 2 for top
+                int y_dir = (std::fmod(particles[i].loc.y, grid_box_width) >= half_box_size) << 1;
+                // x_dir + y_dir = 0 bottom left, 1 bottom right, 2 top left, 3 top right
+                grid_quadrants[(box << 2) + x_dir + y_dir].emplace_back(i);
+            }
+        }
+
+        #pragma omp parallel for shared(grid, grid_quadrants, overlaps, wall_overlaps, particles) schedule(static)
+        for (int j = 0; j < grid_box_count << 2; ++j) {
+            int box = j >> 2;
+            int quad = j - (box << 2);
+            int row = box / grid_box_row_count;
+            int col = box - row * grid_box_row_count;
+            int row_check_idx = row + ((quad > 1) << 1) - 1; // row added with -1 for down, +1 for up
+            int col_check_idx = col + ((quad & 1) << 1) - 1; // col added with -1 for left, +1 for right
+
+            bool row_check_idx_valid = 0 <= row_check_idx && row_check_idx < grid_box_row_count;
+            bool col_check_idx_valid = 0 <= col_check_idx && col_check_idx < grid_box_row_count;
+
+            // Find overlaps
+            for (int i : grid_quadrants[j]) {
+                add_overlaps(grid[box], particles, i, overlaps, params.param_radius); // Same grid box
+                wall_overlaps[i] = 0;
+            }
+            if (col_check_idx_valid) {
+                for (int i : grid_quadrants[j]) {
+                    add_overlaps(grid[row * grid_box_row_count + col_check_idx], particles, i, overlaps, params.param_radius);
+                }
+            }
+            if (row_check_idx_valid) {
+                for (int i : grid_quadrants[j]) {
+                    add_overlaps(grid[row_check_idx * grid_box_row_count + col], particles, i, overlaps, params.param_radius);
+                }
+            }
                 
-                if (x_check_idx_valid) {
-                    add_overlaps(grid[row * grid_box_row_count + x_check_idx], particles, i, overlaps, params.param_radius);
+            // Diagonally opposite grid box
+            if (row_check_idx_valid && col_check_idx_valid) {
+                for (int i : grid_quadrants[j]) {
+                    add_overlaps(grid[row_check_idx * grid_box_row_count + col_check_idx], particles, i, overlaps, params.param_radius);
                 }
-                if (y_check_idx_valid) {
-                    add_overlaps(grid[y_check_idx * grid_box_row_count + col], particles, i, overlaps, params.param_radius);
-                }
-                
-                // Diagonally opposite grid box
-                if (y_check_idx_valid && x_check_idx_valid) {
-                    add_overlaps(grid[y_check_idx * grid_box_row_count + x_check_idx], particles, i, overlaps, params.param_radius);
-                }
-                // If last (or 2nd last) row / col; or Out of bounds for at least 1 axis
-                if ((row >= possible_wall_collision_max || col >= possible_wall_collision_max || !y_check_idx_valid || !x_check_idx_valid) &&
-                        is_wall_overlap(particles[i].loc.x, particles[i].loc.y, params.square_size, params.param_radius)) {
-                    //#pragma omp critical - Not needed as each thread writing to unique wall_overlaps[i]
-                    wall_overlaps[i] = 1;
-                } else {
-                    wall_overlaps[i] = 0;
+            }
+            // If last (or 2nd last) row / col; or Out of bounds for at least 1 axis
+            if (row >= possible_wall_collision_max || col >= possible_wall_collision_max ||
+                   !row_check_idx_valid || !col_check_idx_valid) {
+                for (int i : grid_quadrants[j]) {
+                    if (is_wall_overlap(particles[i].loc.x, particles[i].loc.y, params.square_size, params.param_radius)) {
+                        //#pragma omp critical - Not needed as each thread writing to unique wall_overlaps[i]
+                        wall_overlaps[i] = 1;
+                    }
                 }
             }
         }
@@ -222,12 +259,14 @@ int main(int argc, char* argv[]) {
         // TRACK ONLY CHANGED
         std::vector<int> to_resolve;
         for (int i = 0; i < params.param_particles; ++i) {
-            while (check_and_resolve_particles_store_less_reverse(overlaps[i], particles, i, wall_overlaps[i], to_resolve, params.square_size, params.param_radius));
+            while (check_and_resolve_particles_store_less_reverse(overlaps[i], particles, i, wall_overlaps[i], to_resolve,
+                    params.square_size, params.param_radius));
         }
         while (!to_resolve.empty()) {
             std::vector<int> to_resolve2;
             for (int i : to_resolve) {
-                while (check_and_resolve_particles_store(overlaps[i], particles, i, wall_overlaps[i], to_resolve2, params.square_size, params.param_radius));
+                while (check_and_resolve_particles_store(overlaps[i], particles, i, wall_overlaps[i], to_resolve2,
+                        params.square_size, params.param_radius));
             }
             to_resolve.swap(to_resolve2);
         }
