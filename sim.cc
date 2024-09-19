@@ -29,7 +29,8 @@ inline void update_grid(int grid_box_width, int grid_box_row_count, int grid_box
     }
 }
 
-inline void add_overlaps(std::vector<int> &vec_to_check, std::vector<Particle> &particles, int idx, std::vector<std::vector<int>> &overlaps, int radius) {
+inline void add_overlaps(std::vector<int> &vec_to_check, std::vector<Particle> &particles, int idx,
+        std::vector<std::vector<int>> &overlaps, int radius) {
     for (int i : vec_to_check) {
         Vec2 loc1 = particles[idx].loc;
         Vec2 loc2 = particles[i].loc;
@@ -39,8 +40,8 @@ inline void add_overlaps(std::vector<int> &vec_to_check, std::vector<Particle> &
     }
 }
 
-inline bool check_and_resolve_particles_store_less_reverse(std::vector<int> &neighbours, std::vector<Particle> &particles, int idx, int wall_overlap,
-        std::vector<int> &to_resolve, int square_size, int radius) {
+inline bool check_and_resolve_particles_store_less_reverse(std::vector<int> &neighbours, std::vector<Particle> &particles,
+        int idx, int wall_overlap, std::vector<int> &to_resolve, int square_size, int radius) {
     bool unresolved = false;
 
     for (auto i = neighbours.rbegin(); i != neighbours.rend(); ++i) {
@@ -59,8 +60,8 @@ inline bool check_and_resolve_particles_store_less_reverse(std::vector<int> &nei
     return unresolved;
 }
 
-inline bool check_and_resolve_particles_store(std::vector<int> &neighbours, std::vector<Particle> &particles, int idx, int wall_overlap,
-        std::vector<int> &to_resolve, int square_size, int radius) {
+inline bool check_and_resolve_particles_store(std::vector<int> &neighbours, std::vector<Particle> &particles,
+        int idx, int wall_overlap, std::vector<int> &to_resolve, int square_size, int radius) {
     bool unresolved = false;
 
     for (int i : neighbours) {
@@ -77,7 +78,8 @@ inline bool check_and_resolve_particles_store(std::vector<int> &neighbours, std:
     return unresolved;
 }
 
-// inline bool check_and_resolve_particles(std::vector<int> &neighbours, std::vector<Particle> &particles, int idx, int square_size, int radius) {
+// inline bool check_and_resolve_particles(std::vector<int> &neighbours, std::vector<Particle> &particles, int idx,
+//         int square_size, int radius) {
 //     bool unresolved = false;
 
 //     for (int i : neighbours) {
@@ -133,8 +135,6 @@ int main(int argc, char* argv[]) {
         grid[i].reserve(reserve_size);
     }
 
-    //std::vector<int> grid_quadrants(grid_box_count << 2);
-
     std::vector<std::vector<int>> overlaps(params.param_particles);
 
     #pragma omp parallel for shared(overlaps) schedule(static) //if (params.param_particles >= 10000)
@@ -161,12 +161,15 @@ int main(int argc, char* argv[]) {
         #pragma omp parallel for shared(grid, overlaps, particles) schedule(static)
         for (int box = 0; box < grid_box_count; ++box) {
             for (int i : grid[box]) {
-                // Find which quadrant of grid box the particle is in, and store the resulting indexes to check
-                // No need critical section since location is fixed
+                // Find which quadrant of grid box the particle is in, and check whether resulting indexes are valid
                 int row = box / grid_box_row_count;
                 int col = box - row * grid_box_row_count;
-                int y_check_idx = row + ((std::fmod(particles[i].loc.y, grid_box_width) >= grid_box_width / 2.0) << 1) - 1; // -1 for down, +1 for up, added to row
-                int x_check_idx = col + ((std::fmod(particles[i].loc.x, grid_box_width) >= grid_box_width / 2.0) << 1) - 1; // -1 for left, +1 for right, added to col
+
+                // -1 for down, +1 for up, added to row
+                int y_check_idx = row + ((std::fmod(particles[i].loc.y, grid_box_width) >= grid_box_width / 2.0) << 1) - 1;
+                // -1 for left, +1 for right, added to col
+                int x_check_idx = col + ((std::fmod(particles[i].loc.x, grid_box_width) >= grid_box_width / 2.0) << 1) - 1;
+
                 bool y_check_idx_valid = 0 <= y_check_idx && y_check_idx < grid_box_row_count;
                 bool x_check_idx_valid = 0 <= x_check_idx && x_check_idx < grid_box_row_count;
 
@@ -222,12 +225,14 @@ int main(int argc, char* argv[]) {
         // TRACK ONLY CHANGED
         std::vector<int> to_resolve;
         for (int i = 0; i < params.param_particles; ++i) {
-            while (check_and_resolve_particles_store_less_reverse(overlaps[i], particles, i, wall_overlaps[i], to_resolve, params.square_size, params.param_radius));
+            while (check_and_resolve_particles_store_less_reverse(overlaps[i], particles, i, wall_overlaps[i],
+                    to_resolve, params.square_size, params.param_radius));
         }
         while (!to_resolve.empty()) {
             std::vector<int> to_resolve2;
             for (int i : to_resolve) {
-                while (check_and_resolve_particles_store(overlaps[i], particles, i, wall_overlaps[i], to_resolve2, params.square_size, params.param_radius));
+                while (check_and_resolve_particles_store(overlaps[i], particles, i, wall_overlaps[i],
+                        to_resolve2, params.square_size, params.param_radius));
             }
             to_resolve.swap(to_resolve2);
         }
