@@ -14,7 +14,7 @@
 inline void update_grid(int grid_width, int grid_count,
         std::vector<std::vector<std::vector<int>>> &grid, std::vector<Particle> &particles) {
 
-    #pragma omp parallel for shared(grid, grid_count) collapse(2) if(grid_count >= 100000)
+    //#pragma omp parallel for shared(grid, grid_count) collapse(2) if(particles.size() >= 100000)
     for (int i = 0; i < grid_count; ++i) {
         for (int j = 0; j < grid_count; ++j) {
             grid[i][j].clear();
@@ -24,10 +24,8 @@ inline void update_grid(int grid_width, int grid_count,
     // Parallelising is slower since particles.size() is too small,
     // and since updating grid needs critical section
     for (std::vector<Particle>::size_type i = 0; i < particles.size(); ++i) {
-        int row = std::max(0, int(particles[i].loc.y / grid_width));
-        row = std::min(row, grid_count - 1);
-        int col = std::max(0, int(particles[i].loc.x / grid_width));
-        col = std::min(col, grid_count - 1);
+        int row = std::min(std::max(0, int(particles[i].loc.y / grid_width)), grid_count - 1);
+        int col = std::min(std::max(0, int(particles[i].loc.x / grid_width)), grid_count - 1);
 
         grid[row][col].emplace_back(i);
     }
@@ -43,17 +41,12 @@ inline void add_overlaps(std::vector<int> &vec_to_check, std::vector<Particle> &
     }
 }
 
-inline bool check_and_resolve_particles_store_less_reverse(std::vector<int> &neighbours, std::vector<Particle> &particles, int idx, std::vector<int> &to_resolve,
-        int square_size, int radius) {
+inline bool check_and_resolve_particles_store_less_reverse(std::vector<int> &neighbours, std::vector<Particle> &particles, int idx, int wall_overlap,
+        std::vector<int> &to_resolve, int square_size, int radius) {
     bool unresolved = false;
 
     for (auto i = neighbours.rbegin(); i != neighbours.rend(); ++i) {
-        if (*i == -1) {
-            if (is_wall_collision(particles[idx], square_size, radius)) {
-                resolve_wall_collision(particles[idx], square_size, radius);
-                unresolved = true;
-            }
-        } else if (is_particle_moving_closer(particles[idx], particles[*i])) {
+        if (is_particle_moving_closer(particles[idx], particles[*i])) {
             resolve_particle_collision(particles[idx], particles[*i]);
             unresolved = true;
             if (*i < idx) {
@@ -61,24 +54,27 @@ inline bool check_and_resolve_particles_store_less_reverse(std::vector<int> &nei
             }
         }
     }
+    if (wall_overlap && is_wall_collision(particles[idx], square_size, radius)) {
+        resolve_wall_collision(particles[idx], square_size, radius);
+        unresolved = true;
+    }
     return unresolved;
 }
 
-inline bool check_and_resolve_particles_store(std::vector<int> &neighbours, std::vector<Particle> &particles, int idx, std::vector<int> &to_resolve,
-        int square_size, int radius) {
+inline bool check_and_resolve_particles_store(std::vector<int> &neighbours, std::vector<Particle> &particles, int idx, int wall_overlap,
+        std::vector<int> &to_resolve, int square_size, int radius) {
     bool unresolved = false;
 
     for (int i : neighbours) {
-        if (i == -1) {
-            if (is_wall_collision(particles[idx], square_size, radius)) {
-                resolve_wall_collision(particles[idx], square_size, radius);
-                unresolved = true;
-            }
-        } else if (is_particle_moving_closer(particles[idx], particles[i])) {
+        if (is_particle_moving_closer(particles[idx], particles[i])) {
             resolve_particle_collision(particles[idx], particles[i]);
             unresolved = true;
             to_resolve.emplace_back(i);
         }
+    }
+    if (wall_overlap && is_wall_collision(particles[idx], square_size, radius)) {
+        resolve_wall_collision(particles[idx], square_size, radius);
+        unresolved = true;
     }
     return unresolved;
 }
@@ -129,8 +125,26 @@ int main(int argc, char* argv[]) {
 #endif
 
     // TODO: this is the part where you simulate particle behavior.
+    int reserve_size = params.param_particles / (grid_count * grid_count); // assume roughly equal amount per grid square
+
     std::vector<std::vector<std::vector<int>>> grid(grid_count,
             std::vector<std::vector<int>>(grid_count));
+    
+    #pragma omp parallel for shared(grid) schedule(static) collapse(2) //if (grid_count >= 37)
+    for (int row = 0; row < grid_count; ++row) {
+        for (int col = 0; col < grid_count; ++col) {
+            grid[row][col].reserve(reserve_size);
+        }
+    }
+
+    std::vector<std::vector<int>> overlaps(params.param_particles);
+
+    #pragma omp parallel for shared(overlaps) schedule(static) //if (params.param_particles >= 10000)
+    for (int i = 0; i < params.param_particles; ++i) {
+        overlaps[i].reserve(reserve_size);
+    }
+
+    std::vector<int> wall_overlaps(params.param_particles, 0);
 
     for (int n = 0; n < params.param_steps; ++n) {
         // Position update
@@ -141,7 +155,15 @@ int main(int argc, char* argv[]) {
         update_grid(grid_width, grid_count, grid, particles);
 
         // Find overlaps
-        std::vector<std::vector<int>> overlaps(params.param_particles);
+        #pragma omp parallel for shared(overlaps) schedule(static) //if (grid_count >= 37)
+        for (int i = 0; i < params.param_particles; ++i) {
+            overlaps[i].clear();
+        }
+
+        #pragma omp parallel for shared(wall_overlaps) schedule(static)
+        for (int i = 0; i < params.param_particles; ++i) {
+            wall_overlaps[i] = 0;
+        }
 
         #pragma omp parallel for shared(grid, overlaps, particles) schedule(static) collapse(2)
         for (int row = 0; row < grid_count; ++row) {
@@ -172,8 +194,8 @@ int main(int argc, char* argv[]) {
                     // If last (or 2nd last) row / col; or Out of bounds for at least 1 axis
                     if ((row >= possible_wall_collision_max || col >= possible_wall_collision_max || !y_check_idx_valid || !x_check_idx_valid) &&
                             is_wall_overlap(particles[i].loc.x, particles[i].loc.y, params.square_size, params.param_radius)) {
-                        //#pragma omp critical - Not needed as each thread writing to unique overlaps[i]
-                        overlaps[i].emplace_back(-1);
+                        //#pragma omp critical - Not needed as each thread writing to unique wall_overlaps[i]
+                        wall_overlaps[i] = 1;
                     }
                 }
             }
@@ -205,12 +227,12 @@ int main(int argc, char* argv[]) {
         // TRACK ONLY CHANGED
         std::vector<int> to_resolve;
         for (int i = 0; i < params.param_particles; ++i) {
-            while (check_and_resolve_particles_store_less_reverse(overlaps[i], particles, i, to_resolve, params.square_size, params.param_radius));
+            while (check_and_resolve_particles_store_less_reverse(overlaps[i], particles, i, wall_overlaps[i], to_resolve, params.square_size, params.param_radius));
         }
         while (!to_resolve.empty()) {
             std::vector<int> to_resolve2;
             for (int i : to_resolve) {
-                while (check_and_resolve_particles_store(overlaps[i], particles, i, to_resolve2, params.square_size, params.param_radius));
+                while (check_and_resolve_particles_store(overlaps[i], particles, i, wall_overlaps[i], to_resolve2, params.square_size, params.param_radius));
             }
             to_resolve.swap(to_resolve2);
         }
