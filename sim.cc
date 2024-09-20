@@ -34,14 +34,14 @@ inline void add_overlaps(std::vector<int> &vec_to_check, std::vector<Particle> &
     for (int i : vec_to_check) {
         Vec2 loc1 = particles[idx].loc;
         Vec2 loc2 = particles[i].loc;
-        if (idx != i && is_particle_overlap(loc2.x - loc1.x, loc2.y - loc1.y, radius)) {
+        if (is_particle_overlap(loc2.x - loc1.x, loc2.y - loc1.y, radius)) {
             overlaps[idx].emplace_back(i);
         }
     }
 }
 
 inline bool check_and_resolve_particles_store_less_reverse(std::vector<int> &neighbours, std::vector<Particle> &particles,
-        int idx, int wall_overlap, std::vector<int> &to_resolve, int square_size, int radius) {
+        int idx, short wall_overlap, std::vector<int> &to_resolve, int square_size, int radius) {
     bool unresolved = false;
 
     for (auto i = neighbours.rbegin(); i != neighbours.rend(); ++i) {
@@ -61,7 +61,7 @@ inline bool check_and_resolve_particles_store_less_reverse(std::vector<int> &nei
 }
 
 inline bool check_and_resolve_particles_store(std::vector<int> &neighbours, std::vector<Particle> &particles,
-        int idx, int wall_overlap, std::vector<int> &to_resolve, int square_size, int radius) {
+        int idx, short wall_overlap, std::vector<int> &to_resolve, int square_size, int radius) {
     bool unresolved = false;
 
     for (int i : neighbours) {
@@ -142,7 +142,7 @@ int main(int argc, char* argv[]) {
         overlaps[i].reserve(reserve_size);
     }
 
-    std::vector<int> wall_overlaps(params.param_particles, 0);
+    std::vector<short> wall_overlaps(params.param_particles, 0); // boolean values: 0/1
 
     for (int n = 0; n < params.param_steps; ++n) {
         // Position update
@@ -158,8 +158,30 @@ int main(int argc, char* argv[]) {
             overlaps[i].clear();
         }
 
-        #pragma omp parallel for shared(grid, overlaps, particles) schedule(static)
+
+        // Find overlaps
+        #pragma omp parallel for shared(grid, overlaps, particles) schedule(auto)
         for (int box = 0; box < grid_box_count; ++box) {
+            // Same grid box
+            int box_len = (int)grid[box].size();
+            
+            for (int i = 0; i < box_len - 1; ++i) {
+                int p1 = grid[box][i];
+                for (int j = i + 1; j < box_len; ++j) {
+                    int p2 = grid[box][j];
+                    if (is_particle_overlap(particles[p2].loc.x - particles[p1].loc.x,
+                            particles[p2].loc.y - particles[p1].loc.y, params.param_radius)) {
+                        overlaps[p1].emplace_back(p2);
+                        overlaps[p2].emplace_back(p1);
+                        if (is_particle_moving_closer(particles[p1], particles[p2])) {
+                            // free to resolve since both particles are in same box (each box 1 thread)
+                            resolve_particle_collision(particles[p1], particles[p2]);
+                        }
+                    }
+                }
+            }
+
+            // Different grid box
             for (int i : grid[box]) {
                 // Find which quadrant of grid box the particle is in, and check whether resulting indexes are valid
                 int row = box / grid_box_row_count;
@@ -172,10 +194,6 @@ int main(int argc, char* argv[]) {
 
                 bool y_check_idx_valid = 0 <= y_check_idx && y_check_idx < grid_box_row_count;
                 bool x_check_idx_valid = 0 <= x_check_idx && x_check_idx < grid_box_row_count;
-
-                // Find overlaps
-                // Same grid box
-                add_overlaps(grid[box], particles, i, overlaps, params.param_radius);
                 
                 if (x_check_idx_valid) {
                     add_overlaps(grid[row * grid_box_row_count + x_check_idx], particles, i, overlaps, params.param_radius);
