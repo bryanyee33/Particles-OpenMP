@@ -15,7 +15,7 @@ inline bool is_wall_overlap(double x, double y, int square_size, int radius);
 inline bool is_wall_collision(Particle &p, int square_size, int radius);
 // Make particle not collide with wall
 // PRECONDITION: Can be called with no preconditions
-inline void resolve_wall_collision(Particle &p, int square_size, int radius);
+inline bool resolve_wall_collision(Particle &p, int square_size, int radius);
 // Are the particles overlapping
 inline bool is_particle_overlap(double dx, double dy, int radius);
 // Are the particles moving closer together
@@ -24,7 +24,7 @@ inline bool is_particle_moving_closer(Particle &p1, Particle &p2);
 inline bool is_particle_collision(Particle &p1, Particle &p2, int radius);
 // Make particles not collide with each other
 // PRECONDITION: Must only be called if particles are overlapping
-inline void resolve_particle_collision(Particle &p1, Particle &p2);
+inline bool resolve_particle_collision(Particle &p1, Particle &p2);
 // Get the total energy of a group of particles
 inline double getEnergy(std::vector<Particle>& particles);
 // Get the total momentum of a group of particles
@@ -63,17 +63,23 @@ inline bool is_wall_collision(Particle &p, int square_size, int radius) {
  * - square_size: The length of the simulation area
  * - radius: The radius of the particle
  */
-inline void resolve_wall_collision(Particle &p, int square_size, int radius) {
-    if (p.loc.x - radius <= 0) {
+inline bool resolve_wall_collision(Particle &p, int square_size, int radius) {
+    bool unresolved = false;
+    if (p.loc.x - radius <= 0 && p.vel.x < 0) {
         p.vel.x = std::abs(p.vel.x);
-    } else if (p.loc.x + radius >= square_size) {
+        unresolved = true;
+    } else if (p.loc.x + radius >= square_size && p.vel.x > 0) {
         p.vel.x = -std::abs(p.vel.x);
+        unresolved = true;
     }
-    if (p.loc.y - radius <= 0) {
+    if (p.loc.y - radius <= 0 && p.vel.y < 0) {
         p.vel.y = std::abs(p.vel.y);
-    } else if (p.loc.y + radius >= square_size) {
+        return true;
+    } else if (p.loc.y + radius >= square_size && p.vel.y > 0) {
         p.vel.y = -std::abs(p.vel.y);
+        return true;
     }
+    return unresolved;
 }
 
 /**
@@ -119,19 +125,24 @@ inline bool is_particle_collision(Particle &p1, Particle &p2, int radius) {
  * - loc2: The location of the second particle
  * - vel2: The velocity of the second particle
  */
-inline void resolve_particle_collision(Particle &p1, Particle &p2) {
+inline bool resolve_particle_collision(Particle &p1, Particle &p2) {
     double dx = p2.loc.x - p1.loc.x;
     double dy = p2.loc.y - p1.loc.y;
+    double dot_product = (p2.vel.x - p1.vel.x) * dx + (p2.vel.y - p1.vel.y) * dy;
+
+    if (dot_product >= -0.0000001) {
+        return false;
+    }
 
     // Calculate the new velocities of the particles after the collision
     // No need do min(0, ...) since checked if particles are moving closer
-    double collision_scale = ((p2.vel.x - p1.vel.x) * dx + (p2.vel.y - p1.vel.y) * dy) /
-            (dx * dx + dy * dy);
+    double collision_scale = dot_product / (dx * dx + dy * dy);
 
     p1.vel.x += collision_scale * dx;
     p1.vel.y += collision_scale * dy;
     p2.vel.x -= collision_scale * dx;
     p2.vel.y -= collision_scale * dy;
+    return true;
 }
 
 /**

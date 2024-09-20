@@ -45,16 +45,14 @@ inline bool check_and_resolve_particles_store_less_reverse(std::vector<int> &nei
     bool unresolved = false;
 
     for (auto i = neighbours.rbegin(); i != neighbours.rend(); ++i) {
-        if (is_particle_moving_closer(particles[idx], particles[*i])) {
-            resolve_particle_collision(particles[idx], particles[*i]);
+        if (resolve_particle_collision(particles[idx], particles[*i])) {
             unresolved = true;
             if (*i < idx) {
                 to_resolve.emplace_back(*i);
             }
         }
     }
-    if (wall_overlap && is_wall_collision(particles[idx], square_size, radius)) {
-        resolve_wall_collision(particles[idx], square_size, radius);
+    if (wall_overlap && resolve_wall_collision(particles[idx], square_size, radius)) {
         unresolved = true;
     }
     return unresolved;
@@ -65,14 +63,12 @@ inline bool check_and_resolve_particles_store(std::vector<int> &neighbours, std:
     bool unresolved = false;
 
     for (int i : neighbours) {
-        if (is_particle_moving_closer(particles[idx], particles[i])) {
-            resolve_particle_collision(particles[idx], particles[i]);
+        if (resolve_particle_collision(particles[idx], particles[i])) {
             unresolved = true;
             to_resolve.emplace_back(i);
         }
     }
-    if (wall_overlap && is_wall_collision(particles[idx], square_size, radius)) {
-        resolve_wall_collision(particles[idx], square_size, radius);
+    if (wall_overlap && resolve_wall_collision(particles[idx], square_size, radius)) {
         unresolved = true;
     }
     return unresolved;
