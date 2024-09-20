@@ -94,6 +94,24 @@ inline bool check_and_resolve_particles_store(std::vector<int> &neighbours, std:
 //     return unresolved;
 // }
 
+inline void track_and_resolve(std::vector<int> &elements, std::vector<std::vector<int>> &overlaps, std::vector<Particle> &particles,
+        std::vector<short> wall_overlaps, int square_size, int radius) {
+
+    std::vector<int> to_resolve;
+    for (int i : elements) {
+        while (check_and_resolve_particles_store_less_reverse(overlaps[i], particles, i, wall_overlaps[i],
+                to_resolve, square_size, radius));
+    }
+    while (!to_resolve.empty()) {
+        std::vector<int> to_resolve2;
+        for (int i : to_resolve) {
+            while (check_and_resolve_particles_store(overlaps[i], particles, i, wall_overlaps[i],
+                    to_resolve2, square_size, radius));
+        }
+        to_resolve.swap(to_resolve2);
+    }
+}
+
 int main(int argc, char* argv[]) {
     // Read arguments and input file
     Params params{};
@@ -137,8 +155,15 @@ int main(int argc, char* argv[]) {
 
     #pragma omp parallel for shared(overlaps) schedule(static) //if (params.param_particles >= 10000)
     for (int i = 0; i < params.param_particles; ++i) {
-        overlaps[i].reserve(reserve_size);
+        overlaps[i].reserve(reserve_size >> 1);
     }
+
+    // std::vector<std::vector<int>> box_overlaps(params.param_particles);
+
+    // #pragma omp parallel for shared(box_overlaps) schedule(static) //if (params.param_particles >= 10000)
+    // for (int i = 0; i < params.param_particles; ++i) {
+    //     box_overlaps[i].reserve(reserve_size);
+    // }
 
     std::vector<short> wall_overlaps(params.param_particles, 0); // boolean values: 0/1
 
@@ -154,11 +179,13 @@ int main(int argc, char* argv[]) {
         #pragma omp parallel for shared(overlaps) schedule(static) //if (grid_box_row_count >= 37)
         for (int i = 0; i < params.param_particles; ++i) {
             overlaps[i].clear();
+            // box_overlaps[i].clear();
+            wall_overlaps[i] = 0;
         }
 
 
         // Find overlaps
-        #pragma omp parallel for shared(grid, overlaps, particles) schedule(auto)
+        #pragma omp parallel for shared(grid, overlaps, /*box_overlaps,*/ particles) schedule(auto)
         for (int box = 0; box < grid_box_count; ++box) {
             // Same grid box
             int box_len = (int)grid[box].size();
@@ -171,11 +198,34 @@ int main(int argc, char* argv[]) {
                             particles[p2].loc.y - particles[p1].loc.y, params.param_radius)) {
                         overlaps[p1].emplace_back(p2);
                         overlaps[p2].emplace_back(p1);
+                        // box_overlaps[p1].emplace_back(p2);
+                        // box_overlaps[p2].emplace_back(p1);
                         // free to resolve since both particles are in same box (each box 1 thread)
                         resolve_particle_collision(particles[p1], particles[p2]);
                     }
                 }
             }
+
+            // free to resolve since all particles are in same box (each box 1 thread)
+            // resolve as much as possible within box in parallel
+            // TRACK ONLY CHANGED
+            // track_and_resolve(grid[box], box_overlaps, particles, wall_overlaps,
+            //         params.square_size, params.param_radius);
+
+            std::vector<int> to_resolve;
+            for (int i : grid[box]) {
+                while (check_and_resolve_particles_store_less_reverse(overlaps[i], particles, i, false,
+                        to_resolve, params.square_size, params.param_radius));
+            }
+            while (!to_resolve.empty()) {
+                std::vector<int> to_resolve2;
+                for (int i : to_resolve) {
+                    while (check_and_resolve_particles_store(overlaps[i], particles, i, false,
+                            to_resolve2, params.square_size, params.param_radius));
+                }
+                to_resolve.swap(to_resolve2);
+            }
+
 
             // Different grid box
             for (int i : grid[box]) {
@@ -207,15 +257,13 @@ int main(int argc, char* argv[]) {
                         is_wall_overlap(particles[i].loc.x, particles[i].loc.y, params.square_size, params.param_radius)) {
                     //#pragma omp critical - Not needed as each thread writing to unique wall_overlaps[i]
                     wall_overlaps[i] = 1;
-                } else {
-                    wall_overlaps[i] = 0;
                 }
             }
         }
 
         // Velocity update
 
-        // ARBITRARY ORDER [Fastest for Small]
+        // ARBITRARY ORDER [Faster for Small]
         // bool unresolved = true;
         // while (unresolved) {
         //     unresolved = false;
@@ -224,7 +272,7 @@ int main(int argc, char* argv[]) {
         //     }
         // }
 
-        // ARBITRARY REPEAT [Fastest for Medium & Large]
+        // ARBITRARY REPEAT [Faster for Medium & Large]
         // bool unresolved = true;
         // while (unresolved) {
         //     unresolved = false;
@@ -250,6 +298,14 @@ int main(int argc, char* argv[]) {
             }
             to_resolve.swap(to_resolve2);
         }
+
+        // for (int i = 1; i < grid_box_row_count; ++i) {
+
+        // #pragma omp parallel for shared(grid, overlaps, box_overlaps, particles) schedule(auto)
+        // for (int box = 0; box < grid_box_count >> i; ++box) {
+        //     track_and_resolve(grid[box], box_overlaps, particles, wall_overlaps,
+        //             params.square_size, params.param_radius);
+        // }
         
 
         // ARBITRARY REPEAT PARALLEL [WRONG CONCEPT - DOESN'T WORK (resolving particle x & y independently would not result in same values)]
