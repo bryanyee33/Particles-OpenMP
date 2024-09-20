@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
 
 
         // Find overlaps
-        #pragma omp parallel for shared(grid, overlaps, wall_overlaps, particles) schedule(static) collapse(2)
+        #pragma omp parallel for shared(grid, overlaps, wall_overlaps, particles) schedule(auto) collapse(2)
         for (int row = 0; row < grid_box_row_count; ++row) {
             for (int col = 0; col < grid_box_row_count; ++col) {
                 // Same grid box
