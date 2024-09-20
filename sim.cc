@@ -52,7 +52,8 @@ inline bool check_and_resolve_particles_store_less_reverse(std::vector<int> &nei
             }
         }
     }
-    if (wall_overlap && resolve_wall_collision(particles[idx], square_size, radius)) {
+    if (wall_overlap && is_wall_collision(particles[idx], square_size, radius)) {
+        resolve_wall_collision(particles[idx], square_size, radius);
         unresolved = true;
     }
     return unresolved;
@@ -68,7 +69,8 @@ inline bool check_and_resolve_particles_store(std::vector<int> &neighbours, std:
             to_resolve.emplace_back(i);
         }
     }
-    if (wall_overlap && resolve_wall_collision(particles[idx], square_size, radius)) {
+    if (wall_overlap && is_wall_collision(particles[idx], square_size, radius)) {
+        resolve_wall_collision(particles[idx], square_size, radius);
         unresolved = true;
     }
     return unresolved;
@@ -169,10 +171,8 @@ int main(int argc, char* argv[]) {
                             particles[p2].loc.y - particles[p1].loc.y, params.param_radius)) {
                         overlaps[p1].emplace_back(p2);
                         overlaps[p2].emplace_back(p1);
-                        if (is_particle_moving_closer(particles[p1], particles[p2])) {
-                            // free to resolve since both particles are in same box (each box 1 thread)
-                            resolve_particle_collision(particles[p1], particles[p2]);
-                        }
+                        // free to resolve since both particles are in same box (each box 1 thread)
+                        resolve_particle_collision(particles[p1], particles[p2]);
                     }
                 }
             }

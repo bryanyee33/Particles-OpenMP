@@ -15,7 +15,7 @@ inline bool is_wall_overlap(double x, double y, int square_size, int radius);
 inline bool is_wall_collision(Particle &p, int square_size, int radius);
 // Make particle not collide with wall
 // PRECONDITION: Can be called with no preconditions
-inline bool resolve_wall_collision(Particle &p, int square_size, int radius);
+inline void resolve_wall_collision(Particle &p, int square_size, int radius);
 // Are the particles overlapping
 inline bool is_particle_overlap(double dx, double dy, int radius);
 // Are the particles moving closer together
@@ -63,23 +63,17 @@ inline bool is_wall_collision(Particle &p, int square_size, int radius) {
  * - square_size: The length of the simulation area
  * - radius: The radius of the particle
  */
-inline bool resolve_wall_collision(Particle &p, int square_size, int radius) {
-    bool unresolved = false;
-    if (p.loc.x - radius <= 0 && p.vel.x < 0) {
+inline void resolve_wall_collision(Particle &p, int square_size, int radius) {
+    if (p.loc.x - radius <= 0) {
         p.vel.x = std::abs(p.vel.x);
-        unresolved = true;
-    } else if (p.loc.x + radius >= square_size && p.vel.x > 0) {
+    } else if (p.loc.x + radius >= square_size) {
         p.vel.x = -std::abs(p.vel.x);
-        unresolved = true;
     }
-    if (p.loc.y - radius <= 0 && p.vel.y < 0) {
+    if (p.loc.y - radius <= 0) {
         p.vel.y = std::abs(p.vel.y);
-        return true;
-    } else if (p.loc.y + radius >= square_size && p.vel.y > 0) {
+    } else if (p.loc.y + radius >= square_size) {
         p.vel.y = -std::abs(p.vel.y);
-        return true;
     }
-    return unresolved;
 }
 
 /**
