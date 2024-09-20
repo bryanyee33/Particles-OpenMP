@@ -12,7 +12,7 @@
 inline void update_grid(int grid_box_width, int grid_box_row_count,
         std::vector<std::vector<std::vector<int>>> &grid, std::vector<Particle> &particles) {
 
-    //#pragma omp parallel for shared(grid, grid_count) collapse(2) if(particles.size() >= 100000)
+    //#pragma omp parallel for shared(grid, grid_box_row_count) collapse(2) if(particles.size() >= 100000)
     for (int i = 0; i < grid_box_row_count; ++i) {
         for (int j = 0; j < grid_box_row_count; ++j) {
             grid[i][j].clear();
@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
     std::vector<Particle> particles;
     read_args(argc, argv, params, particles);
 
-    int grid_box_width = (params.param_radius << 2) + 1; // Width of each small box in grid
+    int grid_box_width = (params.param_radius << 2) + 1; // Width of each small box in grid -> radius * 4 + 1
     int grid_box_row_count = std::ceil(params.square_size / grid_box_width); // No. of small boxes in a row
     int possible_wall_collision_max;
     // If length of last box is smaller than radius, particles in the 2nd last box can still hit the wall.
@@ -144,7 +144,6 @@ int main(int argc, char* argv[]) {
         }
         update_grid(grid_box_width, grid_box_row_count, grid, particles);
 
-        // Find overlaps
         #pragma omp parallel for shared(overlaps) schedule(static) //if (grid_box_row_count >= 37)
         for (int i = 0; i < params.param_particles; ++i) {
             overlaps[i].clear();
@@ -166,7 +165,7 @@ int main(int argc, char* argv[]) {
                                 particles[p2].loc.y - particles[p1].loc.y, params.param_radius)) {
                             overlaps[p1].emplace_back(p2);
                             overlaps[p2].emplace_back(p1);
-                            // free to resolve since both particles are in same box (each box 1 thread)
+                            // free to resolve since both particles are in same box (each grid box 1 thread)
                             resolve_particle_collision(particles[p1], particles[p2]);
                         }
                     }
@@ -175,13 +174,16 @@ int main(int argc, char* argv[]) {
                 // free to resolve since all particles are in same box (each box 1 thread)
                 // resolve as much as possible within box in parallel
                 // TRACK ONLY CHANGED
-                std::vector<int> to_resolve;
+                std::vector<int> to_resolve; // tracks what particles needs to be checked for possible collision
                 for (int i : grid[row][col]) {
+                    // resolve in reverse direction (biggest to smallest idx) to minimise redundant checks.
+                    // store only indexes less than current one, since based on this for loop, we will be checking
+                    // bigger indexes later already.
                     while (check_and_resolve_particles_store_less_reverse(overlaps[i], particles, i, false,
                             to_resolve, params.square_size, params.param_radius));
                 }
                 while (!to_resolve.empty()) {
-                    std::vector<int> to_resolve2;
+                    std::vector<int> to_resolve2; // stores the next iteration of particles to resolve
                     for (int i : to_resolve) {
                         while (check_and_resolve_particles_store(overlaps[i], particles, i, false,
                                 to_resolve2, params.square_size, params.param_radius));
@@ -189,9 +191,11 @@ int main(int argc, char* argv[]) {
                     to_resolve.swap(to_resolve2);
                 }
 
-                // Different grid box
+                // Other grid boxes
                 for (int i : grid[row][col]) {
-                    // Find which quadrant of grid box the particle is in, and check whether resulting indexes are valid
+                    // Find which quadrant of grid box the particle is in (resolve only neighbouring grid boxes in those directions),
+                    // and check whether the neighbouring grid box found is a valid index
+
                     // -1 for down, +1 for up, added to row
                     int y_check_idx = row + ((std::fmod(particles[i].loc.y, grid_box_width) >= grid_box_width / 2.0) << 1) - 1;
                     // -1 for left, +1 for right, added to col
@@ -232,6 +236,8 @@ int main(int argc, char* argv[]) {
                 #pragma omp parallel for shared(start, grid, overlaps, wall_overlaps, particles) schedule(auto) collapse(2) reduction(|| : unresolved)
                 for (int row = start & 1; row < grid_box_row_count; row += 2) { // row = 0, 1, 0, 1
                     for (int col = (start >> 1) & 1; col < grid_box_row_count; col += 2) { // col = 0, 0, 1, 1
+                        // free to resolve without critical sections, since each particle cannot overlap with
+                        // both top & bottom / left & right neighbouring boxes at the same time
                         for (int i : grid[row][col]) {
                             if (check_and_resolve_particles(overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius)) {
                                 while (check_and_resolve_particles(overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius));
@@ -363,7 +369,6 @@ int main(int argc, char* argv[]) {
         //         }
         //     }
         // }
-        // // Resolve clusters in parallel
         // bool unresolved = true;
         // while (unresolved) {
         //     unresolved = false;
