@@ -3,8 +3,6 @@
 #include <cmath>
 #include <fstream>
 #include <vector>
-// #include <unordered_set>
-// #include <stack>
 
 #include "collision.h"
 #include "io.h"
@@ -223,7 +221,27 @@ int main(int argc, char* argv[]) {
             }
         }
 
+
         // Velocity update
+
+        // CHECKERED PARALLEL RESOLVE
+        bool unresolved = true;
+        while (unresolved) {
+            unresolved = false;
+            for (int start = 0; start < 4; ++start) {
+                #pragma omp parallel for shared(start, grid, overlaps, wall_overlaps, particles) schedule(auto) collapse(2) reduction(|| : unresolved)
+                for (int row = start & 1; row < grid_box_row_count; row += 2) { // row = 0, 1, 0, 1
+                    for (int col = (start >> 1) & 1; col < grid_box_row_count; col += 2) { // col = 0, 0, 1, 1
+                        for (int i : grid[row][col]) {
+                            if (check_and_resolve_particles(overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius)) {
+                                while (check_and_resolve_particles(overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius));
+                                unresolved = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         // ARBITRARY ORDER [Faster for Small]
         // bool unresolved = true;
@@ -260,27 +278,7 @@ int main(int argc, char* argv[]) {
         //     }
         //     to_resolve.swap(to_resolve2);
         // }
-
-        // CHECKERED PARALLEL RESOLVE
-        bool unresolved = true;
-        while (unresolved) {
-            unresolved = false;
-            for (int start = 0; start < 4; ++start) {
-                #pragma omp parallel for shared(start, grid, overlaps, wall_overlaps, particles) schedule(auto) collapse(2) reduction(|| : unresolved)
-                for (int row = start & 1; row < grid_box_row_count; row += 2) { // row = 0, 1, 0, 1
-                    for (int col = (start >> 1) & 1; col < grid_box_row_count; col += 2) { // col = 0, 0, 1, 1
-                        for (int i : grid[row][col]) {
-                            if (check_and_resolve_particles(overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius)) {
-                                while (check_and_resolve_particles(overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius));
-                                unresolved = true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
         
-
         // ARBITRARY REPEAT PARALLEL [WRONG CONCEPT - DOESN'T WORK (resolving particle x & y independently would not result in same values)]
         // bool unresolved = true;
         // while (unresolved) {
