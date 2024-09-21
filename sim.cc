@@ -76,12 +76,12 @@ inline bool check_and_resolve_particles_store(std::vector<int> &neighbours, std:
     return unresolved;
 }
 
-inline bool check_and_resolve_particles(std::vector<int> &neighbours, std::vector<Particle> &particles, int idx,
+inline bool check_and_resolve_particles_reverse(std::vector<int> &neighbours, std::vector<Particle> &particles, int idx,
         short wall_overlap, int square_size, int radius) {
     bool unresolved = false;
 
-    for (int i : neighbours) {
-        if (resolve_particle_collision(particles[idx], particles[i])) {
+    for (auto i = neighbours.rbegin(); i != neighbours.rend(); ++i) {
+        if (resolve_particle_collision(particles[idx], particles[*i])) {
             unresolved = true;
         }
     }
@@ -134,6 +134,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::vector<std::vector<int>> overlaps(params.param_particles);
+    //std::vector<std::vector<int>> diag_overlaps(params.param_particles);
     std::vector<short> wall_overlaps(params.param_particles, 0); // boolean values: 0/1
 
     for (int n = 0; n < params.param_steps; ++n) {
@@ -240,8 +241,8 @@ int main(int argc, char* argv[]) {
                         // free to resolve without critical sections, since each particle cannot overlap with
                         // both top & bottom / left & right neighbouring boxes at the same time
                         for (int i : grid[row][col]) {
-                            if (check_and_resolve_particles(overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius)) {
-                                while (check_and_resolve_particles(overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius));
+                            if (check_and_resolve_particles_reverse(overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius)) {
+                                while (check_and_resolve_particles_reverse(overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius));
                                 unresolved = true;
                             }
                         }

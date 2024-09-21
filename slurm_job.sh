@@ -6,7 +6,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --mem=4gb
-#SBATCH --partition=i7-7700
+#SBATCH --partition=xs-4114
 #SBATCH --time=00:10:00
 #SBATCH --output=%x_%j.slurmlog
 #SBATCH --error=%x_%j.slurmlog
@@ -26,6 +26,23 @@ srun --partition=i7-13700 --time=00:10:00 perf stat -e task-clock -r 3 ./e095780
 # srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./e0957806.perf tests/standard/10k_density_0.7.in 20
 # srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/small/random10.in 20
 # srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./e0957806.perf tests/small/random10.in 20
+
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 30
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 25
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 20
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 15
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 10
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 9
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 8
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 7
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 6
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 5
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 4
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 3
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 2
+# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 1
+
+
 
 # srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock ./sim tests/small/random10.in 20
 
