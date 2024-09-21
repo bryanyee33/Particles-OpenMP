@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
 
 
         // Find overlaps
-        #pragma omp parallel for shared(grid, overlaps, wall_overlaps, particles) schedule(static) collapse(2)
+        #pragma omp parallel for shared(grid, overlaps, wall_overlaps, particles) schedule(guided) collapse(2)
         for (int row = 0; row < grid_box_row_count; ++row) {
             for (int col = 0; col < grid_box_row_count; ++col) {
                 
@@ -234,7 +234,7 @@ int main(int argc, char* argv[]) {
         while (unresolved) {
             unresolved = false;
             for (int start = 0; start < 4; ++start) {
-                #pragma omp parallel for shared(start, grid, overlaps, wall_overlaps, particles) schedule(static) collapse(2) reduction(|| : unresolved)
+                #pragma omp parallel for shared(start, grid, overlaps, wall_overlaps, particles) schedule(guided) collapse(2) reduction(|| : unresolved)
                 for (int row = start >> 1; row < grid_box_row_count; row += 2) { // row_start = 0, 0, 1, 1
                     for (int col = start & 1; col < grid_box_row_count; col += 2) { // col_start = 0, 1, 0, 1
                         // free to resolve without critical sections, since each particle cannot overlap with
