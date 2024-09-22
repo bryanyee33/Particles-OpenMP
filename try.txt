@@ -1,0 +1,9 @@
+<INPUT_PATH>: tests/standard/10k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 10000
+Square size: 10000
+Radius: 53
+Number of steps: 100
+Initializing simulation validator.
+Initialized simulation validator.
+Simulation validated successfully :)

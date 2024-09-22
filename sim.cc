@@ -40,6 +40,17 @@ inline void add_overlaps(std::vector<int> &vec_to_check, std::vector<Particle> &
     }
 }
 
+inline void add_overlaps_greater(std::vector<int> &vec_to_check, std::vector<Particle> &particles, int idx,
+        std::vector<std::vector<int>> &overlaps, int radius) {
+    for (int i : vec_to_check) {
+        Vec2 loc1 = particles[idx].loc;
+        Vec2 loc2 = particles[i].loc;
+        if (idx < i && is_particle_overlap(loc2.x - loc1.x, loc2.y - loc1.y, radius)) {
+            overlaps[idx].emplace_back(i);
+        }
+    }
+}
+
 inline bool check_and_resolve_particles_store_less_reverse(std::vector<int> &neighbours, std::vector<Particle> &particles,
         int idx, short wall_overlap, std::vector<int> &to_resolve, int square_size, int radius) {
     bool unresolved = false;
@@ -134,7 +145,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::vector<std::vector<int>> overlaps(params.param_particles);
-    //std::vector<std::vector<int>> diag_overlaps(params.param_particles);
+    std::vector<std::vector<int>> diag_overlaps(params.param_particles);
     std::vector<short> wall_overlaps(params.param_particles, 0); // boolean values: 0/1
 
     for (int n = 0; n < params.param_steps; ++n) {
@@ -148,6 +159,7 @@ int main(int argc, char* argv[]) {
         #pragma omp parallel for shared(overlaps) schedule(static) //if (grid_box_row_count >= 37)
         for (int i = 0; i < params.param_particles; ++i) {
             overlaps[i].clear();
+            diag_overlaps[i].clear();
             wall_overlaps[i] = 0;
         }
 
@@ -206,16 +218,16 @@ int main(int argc, char* argv[]) {
                     bool y_check_idx_valid = 0 <= y_check_idx && y_check_idx < grid_box_row_count;
                     bool x_check_idx_valid = 0 <= x_check_idx && x_check_idx < grid_box_row_count;
                     
-                    if (x_check_idx_valid) {
+                    if (x_check_idx_valid && !((row + col) & 1)) {
                         add_overlaps(grid[row][x_check_idx], particles, i, overlaps, params.param_radius);
                     }
-                    if (y_check_idx_valid) {
+                    if (y_check_idx_valid && ((row + col) & 1)) {
                         add_overlaps(grid[y_check_idx][col], particles, i, overlaps, params.param_radius);
                     }
                     
                     // Diagonally opposite grid box
                     if (y_check_idx_valid && x_check_idx_valid) {
-                        add_overlaps(grid[y_check_idx][x_check_idx], particles, i, overlaps, params.param_radius);
+                        add_overlaps_greater(grid[y_check_idx][x_check_idx], particles, i, diag_overlaps, params.param_radius);
                     }
                     // If last (or 2nd last) row / col; or Out of bounds for at least 1 axis
                     if ((row >= possible_wall_collision_max || col >= possible_wall_collision_max || !y_check_idx_valid || !x_check_idx_valid) &&
@@ -231,18 +243,53 @@ int main(int argc, char* argv[]) {
         // Velocity update
 
         // CHECKERED PARALLEL RESOLVE
+        // bool unresolved = true;
+        // while (unresolved) {
+        //     unresolved = false;
+        //     for (int start = 0; start < 4; ++start) {
+        //         #pragma omp parallel for shared(start, grid, overlaps, wall_overlaps, particles) schedule(guided, 5) collapse(2) reduction(|| : unresolved)
+        //         for (int row = start >> 1; row < grid_box_row_count; row += 2) { // row_start = 0, 0, 1, 1
+        //             for (int col = start & 1; col < grid_box_row_count; col += 2) { // col_start = 0, 1, 0, 1
+        //                 // free to resolve without critical sections, since each particle cannot overlap with
+        //                 // both top & bottom / left & right neighbouring boxes at the same time
+        //                 for (int i : grid[row][col]) {
+        //                     if (check_and_resolve_particles_reverse(overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius)) {
+        //                         while (check_and_resolve_particles_reverse(overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius));
+        //                         unresolved = true;
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+
+        // TRULY CHECKERED PARALLEL RESOLVE
         bool unresolved = true;
         while (unresolved) {
             unresolved = false;
-            for (int start = 0; start < 4; ++start) {
-                #pragma omp parallel for shared(start, grid, overlaps, wall_overlaps, particles) schedule(guided, 5) collapse(2) reduction(|| : unresolved)
-                for (int row = start >> 1; row < grid_box_row_count; row += 2) { // row_start = 0, 0, 1, 1
-                    for (int col = start & 1; col < grid_box_row_count; col += 2) { // col_start = 0, 1, 0, 1
+            for (int start = 0; start < 2; ++start) {
+                #pragma omp parallel for shared(start, grid, overlaps, wall_overlaps, particles) schedule(auto) collapse(2) reduction(|| : unresolved)
+                for (int row = 0; row < grid_box_row_count; ++row) { // row_start = 0, 0, 1, 1
+                    for (int col = (row + start) & 1; col < grid_box_row_count; col += 2) { // col_start = 0, 1, 0, 1
                         // free to resolve without critical sections, since each particle cannot overlap with
                         // both top & bottom / left & right neighbouring boxes at the same time
                         for (int i : grid[row][col]) {
                             if (check_and_resolve_particles_reverse(overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius)) {
                                 while (check_and_resolve_particles_reverse(overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius));
+                                unresolved = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (int start = 0; start < 2; ++start) {
+                #pragma omp parallel for shared(diag_overlaps, wall_overlaps, particles) schedule(auto) collapse(2) reduction(|| : unresolved)
+                for (int row = start; row < grid_box_row_count; row += 2) {
+                    for (int col = 0; col < grid_box_row_count; ++col) {
+                        for (int i : grid[row][col]) {
+                            if (check_and_resolve_particles_reverse(diag_overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius)) {
+                                while (check_and_resolve_particles_reverse(diag_overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius));
                                 unresolved = true;
                             }
                         }
