@@ -1,0 +1,253 @@
+We are running on soctf-pdc-007.d1.comp.nus.edu.sg
+Job started at Sun Sep 22 06:18:48 PM +08 2024
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+
+ Performance counter stats for './no_self_contained_resolves.perf tests/large/100k_density_0.9.in 20' (3 runs):
+
+         19,761.13 msec task-clock                #   16.113 CPUs utilized            ( +-  0.69% )
+
+            1.2264 +- 0.0622 seconds time elapsed  ( +-  5.07% )
+
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+
+ Performance counter stats for './no_self_contained_resolves.perf tests/large/100k_density_0.9.in 20' (3 runs):
+
+         20,237.55 msec task-clock                #   17.311 CPUs utilized            ( +-  0.94% )
+
+           1.16907 +- 0.00721 seconds time elapsed  ( +-  0.62% )
+
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+
+ Performance counter stats for './no_self_contained_resolves.perf tests/large/100k_density_0.9.in 20' (3 runs):
+
+         19,590.51 msec task-clock                #   16.503 CPUs utilized            ( +-  2.69% )
+
+            1.1871 +- 0.0422 seconds time elapsed  ( +-  3.55% )
+
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+
+ Performance counter stats for './no_self_contained_resolves.perf tests/large/100k_density_0.9.in 20' (3 runs):
+
+         19,435.03 msec task-clock                #   16.430 CPUs utilized            ( +-  1.70% )
+
+            1.1829 +- 0.0259 seconds time elapsed  ( +-  2.19% )
+
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+
+ Performance counter stats for './no_self_contained_resolves.perf tests/large/100k_density_0.9.in 20' (3 runs):
+
+         20,447.52 msec task-clock                #   17.358 CPUs utilized            ( +-  1.14% )
+
+            1.1780 +- 0.0122 seconds time elapsed  ( +-  1.04% )
+
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+
+ Performance counter stats for './e0957806.perf tests/large/100k_density_0.9.in 20' (3 runs):
+
+         20,581.27 msec task-clock                #   17.602 CPUs utilized            ( +-  1.73% )
+
+            1.1692 +- 0.0195 seconds time elapsed  ( +-  1.67% )
+
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+
+ Performance counter stats for './e0957806.perf tests/large/100k_density_0.9.in 20' (3 runs):
+
+         19,682.08 msec task-clock                #   17.029 CPUs utilized            ( +-  0.26% )
+
+           1.15578 +- 0.00420 seconds time elapsed  ( +-  0.36% )
+
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+
+ Performance counter stats for './e0957806.perf tests/large/100k_density_0.9.in 20' (3 runs):
+
+         21,006.14 msec task-clock                #   17.030 CPUs utilized            ( +-  0.72% )
+
+           1.23348 +- 0.00939 seconds time elapsed  ( +-  0.76% )
+
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+
+ Performance counter stats for './e0957806.perf tests/large/100k_density_0.9.in 20' (3 runs):
+
+         19,981.05 msec task-clock                #   16.876 CPUs utilized            ( +-  0.83% )
+
+           1.18398 +- 0.00603 seconds time elapsed  ( +-  0.51% )
+
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+<INPUT_PATH>: tests/large/100k_density_0.9.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 16
+Number of steps: 100
+
+ Performance counter stats for './e0957806.perf tests/large/100k_density_0.9.in 20' (3 runs):
+
+         19,868.79 msec task-clock                #   17.170 CPUs utilized            ( +-  0.66% )
+
+           1.15719 +- 0.00223 seconds time elapsed  ( +-  0.19% )
+
+Job ended at Sun Sep 22 06:19:26 PM +08 2024

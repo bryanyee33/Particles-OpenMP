@@ -1,0 +1,253 @@
+We are running on soctf-pdc-006.d1.comp.nus.edu.sg
+Job started at Sun Sep 22 03:46:04 PM +08 2024
+<INPUT_PATH>: tests/generated/steps/20.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 20
+<INPUT_PATH>: tests/generated/steps/20.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 20
+<INPUT_PATH>: tests/generated/steps/20.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 20
+
+ Performance counter stats for './sim.perf tests/generated/steps/20.in 20' (3 runs):
+
+          4,600.26 msec task-clock                #   11.118 CPUs utilized            ( +-  1.67% )
+
+            0.4138 +- 0.0205 seconds time elapsed  ( +-  4.96% )
+
+<INPUT_PATH>: tests/generated/steps/40.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 40
+<INPUT_PATH>: tests/generated/steps/40.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 40
+<INPUT_PATH>: tests/generated/steps/40.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 40
+
+ Performance counter stats for './sim.perf tests/generated/steps/40.in 20' (3 runs):
+
+          7,649.08 msec task-clock                #   13.657 CPUs utilized            ( +-  0.32% )
+
+            0.5601 +- 0.0114 seconds time elapsed  ( +-  2.04% )
+
+<INPUT_PATH>: tests/generated/steps/60.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 60
+<INPUT_PATH>: tests/generated/steps/60.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 60
+<INPUT_PATH>: tests/generated/steps/60.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 60
+
+ Performance counter stats for './sim.perf tests/generated/steps/60.in 20' (3 runs):
+
+         10,581.17 msec task-clock                #   14.694 CPUs utilized            ( +-  3.55% )
+
+            0.7201 +- 0.0170 seconds time elapsed  ( +-  2.36% )
+
+<INPUT_PATH>: tests/generated/steps/80.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 80
+<INPUT_PATH>: tests/generated/steps/80.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 80
+<INPUT_PATH>: tests/generated/steps/80.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 80
+
+ Performance counter stats for './sim.perf tests/generated/steps/80.in 20' (3 runs):
+
+         12,774.93 msec task-clock                #   14.363 CPUs utilized            ( +-  0.45% )
+
+            0.8894 +- 0.0865 seconds time elapsed  ( +-  9.73% )
+
+<INPUT_PATH>: tests/generated/steps/100.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 100
+<INPUT_PATH>: tests/generated/steps/100.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 100
+<INPUT_PATH>: tests/generated/steps/100.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 100
+
+ Performance counter stats for './sim.perf tests/generated/steps/100.in 20' (3 runs):
+
+         16,368.56 msec task-clock                #   16.158 CPUs utilized            ( +-  0.63% )
+
+            1.0131 +- 0.0135 seconds time elapsed  ( +-  1.33% )
+
+<INPUT_PATH>: tests/generated/steps/120.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 120
+<INPUT_PATH>: tests/generated/steps/120.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 120
+<INPUT_PATH>: tests/generated/steps/120.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 120
+
+ Performance counter stats for './sim.perf tests/generated/steps/120.in 20' (3 runs):
+
+         18,778.29 msec task-clock                #   16.881 CPUs utilized            ( +-  1.49% )
+
+            1.1124 +- 0.0245 seconds time elapsed  ( +-  2.20% )
+
+<INPUT_PATH>: tests/generated/steps/140.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 140
+<INPUT_PATH>: tests/generated/steps/140.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 140
+<INPUT_PATH>: tests/generated/steps/140.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 140
+
+ Performance counter stats for './sim.perf tests/generated/steps/140.in 20' (3 runs):
+
+         22,699.63 msec task-clock                #   17.623 CPUs utilized            ( +-  1.51% )
+
+            1.2881 +- 0.0143 seconds time elapsed  ( +-  1.11% )
+
+<INPUT_PATH>: tests/generated/steps/160.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 160
+<INPUT_PATH>: tests/generated/steps/160.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 160
+<INPUT_PATH>: tests/generated/steps/160.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 160
+
+ Performance counter stats for './sim.perf tests/generated/steps/160.in 20' (3 runs):
+
+         24,149.12 msec task-clock                #   16.806 CPUs utilized            ( +-  2.07% )
+
+            1.4370 +- 0.0348 seconds time elapsed  ( +-  2.42% )
+
+<INPUT_PATH>: tests/generated/steps/180.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 180
+<INPUT_PATH>: tests/generated/steps/180.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 180
+<INPUT_PATH>: tests/generated/steps/180.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 180
+
+ Performance counter stats for './sim.perf tests/generated/steps/180.in 20' (3 runs):
+
+         27,711.15 msec task-clock                #   17.653 CPUs utilized            ( +-  1.22% )
+
+            1.5698 +- 0.0245 seconds time elapsed  ( +-  1.56% )
+
+<INPUT_PATH>: tests/generated/steps/200.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 200
+<INPUT_PATH>: tests/generated/steps/200.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 200
+<INPUT_PATH>: tests/generated/steps/200.in
+<NUM_THREADS>: 20
+Number of particles: 100000
+Square size: 10000
+Radius: 15
+Number of steps: 200
+
+ Performance counter stats for './sim.perf tests/generated/steps/200.in 20' (3 runs):
+
+         31,935.07 msec task-clock                #   18.018 CPUs utilized            ( +-  0.54% )
+
+           1.77244 +- 0.00228 seconds time elapsed  ( +-  0.13% )
+
+Job ended at Sun Sep 22 03:46:39 PM +08 2024

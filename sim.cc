@@ -134,7 +134,6 @@ int main(int argc, char* argv[]) {
     }
 
     std::vector<std::vector<int>> overlaps(params.param_particles);
-    //std::vector<std::vector<int>> diag_overlaps(params.param_particles);
     std::vector<short> wall_overlaps(params.param_particles, 0); // boolean values: 0/1
 
     for (int n = 0; n < params.param_steps; ++n) {
@@ -195,6 +194,24 @@ int main(int argc, char* argv[]) {
 
                 // Other grid boxes
                 for (int i : grid[row][col]) {
+                    /* // CHECK ALL 9 BOXES (FOR MEASUREMENT COMPARISON)
+                    for (int x = -1; x < 2; ++x) {
+                        for (int y = -1; y < 2; ++y) {
+                            if (x == 0 && y == 0) { // already added above
+                                continue;
+                            }
+                            bool y_check_idx_valid = 0 <= row + y && row + y < grid_box_row_count;
+                            bool x_check_idx_valid = 0 <= col + x && col + x < grid_box_row_count;
+                            if (x_check_idx_valid && y_check_idx_valid) {
+                                add_overlaps(grid[row + y][col + x], particles, i, overlaps, params.param_radius);
+                            }
+                        }
+                    }
+                    if ((row >= possible_wall_collision_max || col >= possible_wall_collision_max || row == 0 || col == 0) &&
+                            is_wall_overlap(particles[i].loc.x, particles[i].loc.y, params.square_size, params.param_radius)) {
+                        wall_overlaps[i] = 1;
+                    } */
+
                     // Find which quadrant of grid box the particle is in (resolve only neighbouring grid boxes in those directions),
                     // and check whether the neighbouring grid box found is a valid index
 
@@ -251,28 +268,7 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // ARBITRARY ORDER [Faster for Small]
-        // bool unresolved = true;
-        // while (unresolved) {
-        //     unresolved = false;
-        //     for (int i = 0; i < params.param_particles; ++i) {
-        //         unresolved = check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius) || unresolved;
-        //     }
-        // }
-
-        // ARBITRARY REPEAT [Faster for Medium & Large]
-        // bool unresolved = true;
-        // while (unresolved) {
-        //     unresolved = false;
-        //     for (int i = 0; i < params.param_particles; ++i) {
-        //         if (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius)) {
-        //             while (check_and_resolve_particles(overlaps[i], particles, i, params.square_size, params.param_radius));
-        //             unresolved = true;
-        //         }
-        //     }
-        // }
-
-        // TRACK ONLY CHANGED
+        // TRACK ONLY CHANGED [Fastest sequential]
         // std::vector<int> to_resolve;
         // for (int i = 0; i < params.param_particles; ++i) {
         //     while (check_and_resolve_particles_store_less_reverse(overlaps[i], particles, i, wall_overlaps[i],
@@ -285,6 +281,27 @@ int main(int argc, char* argv[]) {
         //                 to_resolve2, params.square_size, params.param_radius));
         //     }
         //     to_resolve.swap(to_resolve2);
+        // }
+
+        // ARBITRARY ORDER [Faster sequential for Small]
+        // bool unresolved = true;
+        // while (unresolved) {
+        //     unresolved = false;
+        //     for (int i = 0; i < params.param_particles; ++i) {
+        //         unresolved = check_and_resolve_particles_reverse(overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius) || unresolved;
+        //     }
+        // }
+
+        // ARBITRARY REPEAT [Faster sequential for Medium & Large]
+        // bool unresolved = true;
+        // while (unresolved) {
+        //     unresolved = false;
+        //     for (int i = 0; i < params.param_particles; ++i) {
+        //         if (check_and_resolve_particles_reverse(overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius)) {
+        //             while (check_and_resolve_particles_reverse(overlaps[i], particles, i, wall_overlaps[i], params.square_size, params.param_radius));
+        //             unresolved = true;
+        //         }
+        //     }
         // }
         
         // ARBITRARY REPEAT PARALLEL [WRONG CONCEPT - DOESN'T WORK (resolving particle x & y independently would not result in same values)]
