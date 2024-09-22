@@ -234,7 +234,7 @@ int main(int argc, char* argv[]) {
         bool unresolved = true;
         while (unresolved) {
             unresolved = false;
-            for (int start = 0; start < 4; ++start) {
+            for (int start = 0; start < 4; ++start) { // 00, 01, 10, 11
                 #pragma omp parallel for shared(start, grid, overlaps, wall_overlaps, particles) schedule(guided, 5) collapse(2) reduction(|| : unresolved)
                 for (int row = start >> 1; row < grid_box_row_count; row += 2) { // row_start = 0, 0, 1, 1
                     for (int col = start & 1; col < grid_box_row_count; col += 2) { // col_start = 0, 1, 0, 1
