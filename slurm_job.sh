@@ -146,7 +146,7 @@ srun --partition=i7-13700 --time=00:10:00 perf stat -e task-clock -r 3 ./e095780
 #   srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./no_self_contained_resolves.perf tests/large/100k_density_0.9.in 20
 # done
 # for (( i=0; i<10; i=i+1 )) do
-#   srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./e0957806.perf tests/large/100k_density_0.9.in 20
+#   srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 20
 # done
 
 # Self-contained resolves enabled vs disabled: track
