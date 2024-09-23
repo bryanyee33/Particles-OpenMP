@@ -180,13 +180,13 @@ int main(int argc, char* argv[]) {
                     // resolve in reverse direction (biggest to smallest idx) to minimise redundant checks.
                     // store only indexes less than current one, since based on this for loop, we will be checking
                     // bigger indexes later already.
-                    while (check_and_resolve_particles_store_less_reverse(overlaps[i], particles, i, false,
+                    while (check_and_resolve_particles_store_less_reverse(overlaps[i], particles, i, 0,
                             to_resolve, params.square_size, params.param_radius));
                 }
                 while (!to_resolve.empty()) {
                     std::vector<int> to_resolve2; // stores the next iteration of particles to resolve
                     for (int i : to_resolve) {
-                        while (check_and_resolve_particles_store(overlaps[i], particles, i, false,
+                        while (check_and_resolve_particles_store(overlaps[i], particles, i, 0,
                                 to_resolve2, params.square_size, params.param_radius));
                     }
                     to_resolve.swap(to_resolve2);
