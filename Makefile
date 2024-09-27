@@ -9,16 +9,20 @@ HEADERS := io.h collision.h sim_validator.h
 # Object files
 OBJS := $(SRCS:.cc=.o)
 
-.PHONY: all clean
+.PHONY: all clean bonus
 
 all: release
 
 # List of executables (actual binary names)
-EXECUTABLES := sim 
+EXECUTABLES := sim
 PERF_EXECUTABLES := $(EXECUTABLES:%=%.perf)
+BONUS_EXECUTABLES := sim_bonus
+BONUS_PERF_EXECUTABLES := $(BONUS_EXECUTABLES:%=%.perf)
 
 TARGETS := $(EXECUTABLES) 
 PERF_TARGETS := $(PERF_EXECUTABLES)
+BONUS_TARGETS := $(BONUS_EXECUTABLES) 
+BONUS_PERF_TARGETS := $(BONUS_PERF_EXECUTABLES)
 
 release: $(TARGETS) $(PERF_TARGETS)
 
@@ -38,7 +42,13 @@ clean:
 	$(RM) *.o *.o.perf $(EXECUTABLES) $(PERF_EXECUTABLES) bonus bonus.perf
 
 
-# sim == bonus, sim.perf == bonus.perf
-bonus: all
-	cp sim bonus
-	cp sim.perf bonus.perf
+bonus: $(BONUS_TARGETS) $(BONUS_PERF_TARGETS)
+%.o: %.cc $(HEADERS)
+	$(CXX) $(CXXFLAGS) -DCHECK=1 $(RELEASEFLAGS) -c $< -o $@
+%.o.perf: %.cc $(HEADERS)
+	$(CXX) $(CXXFLAGS) -DCHECK=0 $(RELEASEFLAGS) -c $< -o $@
+
+$(BONUS_EXECUTABLES): %: %.o io.o sim_validator.a
+	$(CXX) $(CXXFLAGS) -DCHECK=1 $(RELEASEFLAGS) -o bonus $^
+$(BONUS_PERF_EXECUTABLES): %.perf: %.o.perf io.o
+	$(CXX) $(CXXFLAGS) -DCHECK=0 $(RELEASEFLAGS) -o bonus.perf $^

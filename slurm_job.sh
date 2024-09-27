@@ -30,21 +30,26 @@ srun --partition=i7-13700 --time=00:10:00 perf stat -e task-clock -r 3 ./e095780
 # srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./e0957806.perf tests/small/random10.in 20
 
 # Vary no. of threads
-# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 30
-# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 25
-# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 21
-# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 20
-# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 15
-# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 10
-# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 9
-# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 8
-# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 7
-# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 6
-# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 5
-# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 4
-# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 3
-# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 2
-# srun --partition=xs-4114 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 1
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 1
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 2
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 3
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 4
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 5
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 6
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 7
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 8
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 9
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 10
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 12
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 13
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 15
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 17
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 19
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 20
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 21
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 25
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 30
+# srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 35
 
 # Vary no. of Particles
 # srun --partition=xs-4114 perf stat -e task-clock -r 3 ./sim.perf tests/generated/num_particles/10k.in 20
