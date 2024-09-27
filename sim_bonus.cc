@@ -251,6 +251,7 @@ int main(int argc, char* argv[]) {
         bool unresolved = true;
         while (unresolved) {
             unresolved = false;
+            // #pragma omp parallel for ordered shared(grid, overlaps, wall_overlaps, particles) schedule(dynamic) collapse(2) reduction(|| : unresolved)
             for (int start = 0; start < 2; ++start) {
                 #pragma omp parallel for shared(start, grid, overlaps, wall_overlaps, particles) schedule(dynamic) reduction(|| : unresolved)
                 for (int row = start; row < grid_box_row_count; row += 2) {

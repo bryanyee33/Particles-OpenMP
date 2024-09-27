@@ -18,7 +18,7 @@ echo "Job started at $(date)"
 # Runs your script with the arguments you passed in
 
 # Own Testing
-srun --partition=i7-13700 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/large/100k_density_0.9.in 16
+srun --partition=i7-13700 --time=00:10:00 perf stat -e task-clock -r 3 ./bonus.perf tests/large/100k_density_0.9.in 16
 srun --partition=i7-13700 --time=00:10:00 perf stat -e task-clock -r 3 ./e0957806.perf tests/large/100k_density_0.9.in 16
 # srun --partition=i7-13700 --time=00:10:00 perf stat -e task-clock -r 3 ./sim.perf tests/standard/10k_density_0.7.in 8
 # srun --partition=i7-13700 --time=00:10:00 perf stat -e task-clock -r 3 ./e0957806.perf tests/standard/10k_density_0.7.in 8
